@@ -301,6 +301,18 @@
   margin-bottom: 20px;
 }
 
+.vip-price-inline {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: line-through;
+  margin-bottom: 6px;
+}
+
+.vip-price-inline span {
+  font-size: 0.82rem;
+}
+
 .vip-price {
   font-family: var(--font-display);
   font-size: 2.5rem;
@@ -591,6 +603,58 @@
   font-size: 0.75rem;
   color: var(--danger);
   margin-top: 6px;
+}
+
+.theme-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.theme-swatch {
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.theme-swatch:hover,
+.theme-swatch.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.theme-swatch-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: block;
+}
+
+.theme-swatch.theme-blue .theme-swatch-dot {
+  background: #3b82f6;
+}
+
+.theme-swatch.theme-purple .theme-swatch-dot {
+  background: #8b5cf6;
+}
+
+.theme-swatch.theme-gold .theme-swatch-dot {
+  background: #f59e0b;
+}
+
+.theme-swatch.theme-platinum .theme-swatch-dot {
+  background: #94a3b8;
+}
+
+.theme-swatch.theme-green .theme-swatch-dot {
+  background: #22c55e;
 }
 
 /* Features input */
