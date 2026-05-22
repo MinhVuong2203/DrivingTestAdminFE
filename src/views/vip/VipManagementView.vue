@@ -41,19 +41,68 @@ const isDeleting = ref(false)
 
 const packageToDelete = ref(null)
 
-const newFeature = ref('')
+const DEFAULT_DESCRIPT = [
+  'Không hiển thị quảng cáo',
+  'Không giới hạn truy cập nhận diện biển báo',
+  'Mở full bộ đề',
+  'Gắn sao trên diễn đàn',
+]
 
-const currentPackage = ref({
+const THEME_OPTIONS = [
+  { value: 'blue', label: 'Blue' },
+  { value: 'purple', label: 'Purple' },
+  { value: 'gold', label: 'Gold' },
+  { value: 'platinum', label: 'Platinum' },
+  { value: 'green', label: 'Green' },
+]
+
+const createEmptyPackage = () => ({
   id: null,
   vipName: '',
   vipPrice: 0,
-  vipTime: 0,
-  description: '',
-  features: [],
+  priceInline: null,
+  isPeriod: false,
+  vipTime: null,
+  descript: [...DEFAULT_DESCRIPT],
   isActive: true,
-  sortOrder: 0,
   colorTheme: 'blue',
 })
+
+const currentPackage = ref(createEmptyPackage())
+
+const getPackageDescriptions = (pkg) => {
+  if (Array.isArray(pkg.descript)) return pkg.descript
+  if (Array.isArray(pkg.features)) return pkg.features
+  if (pkg.description) return [pkg.description]
+  return DEFAULT_DESCRIPT
+}
+
+const formatDuration = (pkg) => (pkg.isPeriod ? 'Vĩnh viễn' : `${pkg.vipTime || 0} ngày`)
+
+const buildPayload = () => {
+  const priceInline = Number(currentPackage.value.priceInline)
+
+  const payload = {
+    ...currentPackage.value,
+    vipPrice: Number(currentPackage.value.vipPrice),
+    priceInline: priceInline > 0 ? priceInline : null,
+    descript: [...DEFAULT_DESCRIPT],
+  }
+
+  if (payload.isPeriod) {
+    payload.vipTime = null
+  } else {
+    payload.vipTime = Number(payload.vipTime)
+  }
+
+  return payload
+}
+
+const handlePeriodChange = () => {
+  if (currentPackage.value.isPeriod) {
+    currentPackage.value.vipTime = null
+  }
+}
 
 /* =========================================
    FILTERED
@@ -77,11 +126,12 @@ const filteredPackages = computed(() => {
 
     result = result.filter(
       (p) =>
-        p.vipName.toLowerCase().includes(keyword) || p.description.toLowerCase().includes(keyword),
+        (p.vipName || '').toLowerCase().includes(keyword) ||
+        getPackageDescriptions(p).some((item) => item.toLowerCase().includes(keyword)),
     )
   }
 
-  return result
+  return result.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0))
 })
 
 /* =========================================
@@ -116,15 +166,7 @@ const openCreateModal = () => {
   isEditMode.value = false
 
   currentPackage.value = {
-    id: null,
-    vipName: '',
-    vipPrice: 0,
-    vipTime: 0,
-    description: '',
-    features: [],
-    isActive: true,
-    sortOrder: allPackages.value.length,
-    colorTheme: 'blue',
+    ...createEmptyPackage(),
   }
 
   showModal.value = true
@@ -139,7 +181,8 @@ const openEditModal = (pkg) => {
 
   currentPackage.value = {
     ...pkg,
-    features: [...pkg.features],
+    vipTime: pkg.vipTime ?? null,
+    descript: [...DEFAULT_DESCRIPT],
   }
 
   showModal.value = true
@@ -151,36 +194,6 @@ const openEditModal = (pkg) => {
 
 const closeModal = () => {
   showModal.value = false
-
-  newFeature.value = ''
-}
-
-/* =========================================
-   FEATURE
-========================================= */
-
-const addFeature = () => {
-  const feature = newFeature.value.trim()
-
-  if (!feature) return
-
-  if (currentPackage.value.features.includes(feature)) return
-
-  currentPackage.value.features.push(feature)
-
-  newFeature.value = ''
-}
-
-const removeFeature = (feature) => {
-  currentPackage.value.features = currentPackage.value.features.filter((f) => f !== feature)
-}
-
-const handleFeatureKeyDown = (e) => {
-  if (e.key === 'Enter') {
-    e.preventDefault()
-
-    addFeature()
-  }
 }
 
 /* =========================================
@@ -202,7 +215,7 @@ const savePackage = async () => {
       return
     }
 
-    if (currentPackage.value.vipTime <= 0) {
+    if (!currentPackage.value.isPeriod && currentPackage.value.vipTime <= 0) {
       toastStore.warning('Thời gian phải lớn hơn 0')
 
       return
@@ -211,9 +224,9 @@ const savePackage = async () => {
     isSaving.value = true
 
     if (isEditMode.value) {
-      await updateVipPackage(currentPackage.value.id, currentPackage.value)
+      await updateVipPackage(currentPackage.value.id, buildPayload())
     } else {
-      await createVipPackage(currentPackage.value)
+      await createVipPackage(buildPayload())
     }
 
     toastStore.success(isEditMode.value ? 'Cập nhật thành công' : 'Tạo gói VIP thành công')
@@ -400,7 +413,7 @@ onMounted(loadPackages)
               </h3>
 
               <p class="vip-card-desc">
-                {{ pkg.description }}
+                {{ pkg.isPeriod ? 'Gói VIP vĩnh viễn' : `Thời hạn ${pkg.vipTime || 0} ngày` }}
               </p>
             </div>
 
@@ -418,6 +431,12 @@ onMounted(loadPackages)
 
           <!-- PRICE -->
           <div class="vip-price-section">
+            <div v-if="pkg.priceInline > 0" class="vip-price-inline">
+              {{ pkg.priceInline.toLocaleString() }}
+
+              <span> VNĐ </span>
+            </div>
+
             <div class="vip-price">
               {{ pkg.vipPrice.toLocaleString() }}
 
@@ -427,16 +446,16 @@ onMounted(loadPackages)
             <div class="vip-duration">
               <i class="bi bi-clock"></i>
 
-              <span> {{ pkg.vipTime }} ngày </span>
+              <span> {{ formatDuration(pkg) }} </span>
             </div>
           </div>
 
           <!-- FEATURES -->
-          <div v-if="pkg.features?.length" class="vip-features">
+          <div v-if="getPackageDescriptions(pkg).length" class="vip-features">
             <div class="vip-features-title">Tính năng</div>
 
             <ul class="vip-features-list">
-              <li v-for="feature in pkg.features" :key="feature">
+              <li v-for="feature in getPackageDescriptions(pkg)" :key="feature">
                 <i class="bi bi-check-lg"></i>
 
                 <span>
@@ -453,14 +472,8 @@ onMounted(loadPackages)
                 <i class="bi bi-calendar"></i>
 
                 <span>
-                  {{ new Date(pkg.createdAt).toLocaleDateString('vi-VN') }}
+                  {{ new Date(pkg.updatedAt || pkg.createdAt).toLocaleDateString('vi-VN') }}
                 </span>
-              </div>
-
-              <div class="vip-meta-item">
-                <i class="bi bi-sort-numeric-down"></i>
-
-                <span> #{{ pkg.sortOrder }} </span>
               </div>
             </div>
 
@@ -501,18 +514,6 @@ onMounted(loadPackages)
               />
             </div>
 
-            <!-- DESCRIPTION -->
-            <div class="form-group">
-              <label class="form-label required"> Mô Tả </label>
-
-              <textarea
-                v-model="currentPackage.description"
-                class="form-textarea"
-                rows="4"
-                placeholder="Nhập mô tả..."
-              ></textarea>
-            </div>
-
             <!-- PRICE + TIME -->
             <div class="form-grid-2">
               <!-- PRICE -->
@@ -527,78 +528,62 @@ onMounted(loadPackages)
                 />
               </div>
 
-              <!-- TIME -->
               <div class="form-group">
-                <label class="form-label required"> Thời Hạn (ngày) </label>
+                <label class="form-label"> Giá Gốc </label>
 
                 <input
-                  v-model="currentPackage.vipTime"
+                  v-model="currentPackage.priceInline"
                   type="number"
                   class="form-input"
-                  placeholder="Nhập số ngày..."
+                  placeholder="Nhập giá gốc..."
                 />
               </div>
             </div>
 
-            <!-- THEME + SORT -->
             <div class="form-grid-2">
-              <!-- THEME -->
               <div class="form-group">
-                <label class="form-label"> Theme Màu </label>
+                <label class="form-label"> Loại thời hạn </label>
 
-                <select v-model="currentPackage.colorTheme" class="form-select">
-                  <option value="blue">Blue</option>
+                <label class="switch-wrapper period-switch">
+                  <input
+                    v-model="currentPackage.isPeriod"
+                    type="checkbox"
+                    @change="handlePeriodChange"
+                  />
 
-                  <option value="purple">Purple</option>
-
-                  <option value="gold">Gold</option>
-
-                  <option value="platinum">Platinum</option>
-
-                  <option value="green">Green</option>
-                </select>
-              </div>
-
-              <!-- SORT -->
-              <div class="form-group">
-                <label class="form-label"> Thứ Tự Hiển Thị </label>
-
-                <input v-model="currentPackage.sortOrder" type="number" class="form-input" />
+                  <span class="switch-label"> Gói vĩnh viễn </span>
+                </label>
               </div>
             </div>
 
-            <!-- FEATURES -->
+            <!-- TIME -->
+            <div v-if="!currentPackage.isPeriod" class="form-group">
+              <label class="form-label required"> Thời Hạn (ngày) </label>
+
+              <input
+                v-model="currentPackage.vipTime"
+                type="number"
+                class="form-input"
+                placeholder="Nhập số ngày..."
+              />
+            </div>
+
+            <!-- THEME -->
             <div class="form-group">
-              <label class="form-label"> Tính Năng </label>
+              <label class="form-label"> Theme Màu </label>
 
-              <!-- INPUT -->
-              <div class="features-input-group">
-                <input
-                  v-model="newFeature"
-                  type="text"
-                  class="form-input"
-                  placeholder="Nhập tính năng..."
-                  @keydown="handleFeatureKeyDown"
-                />
-
-                <button class="btn btn-primary" @click="addFeature">
-                  <i class="bi bi-plus-lg"></i>
-
-                  Thêm
+              <div class="theme-picker">
+                <button
+                  v-for="theme in THEME_OPTIONS"
+                  :key="theme.value"
+                  type="button"
+                  class="theme-swatch"
+                  :class="[`theme-${theme.value}`, { active: currentPackage.colorTheme === theme.value }]"
+                  :title="theme.label"
+                  @click="currentPackage.colorTheme = theme.value"
+                >
+                  <span class="theme-swatch-dot"></span>
                 </button>
-              </div>
-
-              <!-- TAGS -->
-              <div v-if="currentPackage.features?.length" class="features-list">
-                <div v-for="feature in currentPackage.features" :key="feature" class="feature-tag">
-                  <span>
-                    {{ feature }}
-                  </span>
-
-                  <button @click="removeFeature(feature)">
-                    <i class="bi bi-x-lg"></i>
-                  </button>
-                </div>
               </div>
             </div>
 

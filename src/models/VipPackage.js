@@ -3,11 +3,11 @@ export default class VipPackage {
     this.id = null
     this.vipName = ''
     this.vipPrice = 0
-    this.vipTime = 0
-    this.description = ''
-    this.features = []
+    this.priceInline = null
+    this.isPeriod = false
+    this.vipTime = null
+    this.descript = []
     this.isActive = true
-    this.sortOrder = 0
     this.colorTheme = 'blue'
     this.createdAt = null
     this.updatedAt = null
