@@ -105,6 +105,20 @@ watch(
         </lord-icon>
         <span class="nav-label"> GÓI VIP </span>
       </router-link>
+
+      <!-- FORUM -->
+      <router-link to="/forum-manager" class="nav-item" active-class="active">
+        <lord-icon
+          src="https://cdn.lordicon.com/zldpstex.json"
+          trigger="hover"
+          delay="100"
+          stroke="bold"
+          colors="primary:#242424,secondary:#e83a30"
+          class="nav-icon"
+        >
+        </lord-icon>
+        <span class="nav-label"> DIỄN ĐÀN </span>
+      </router-link>
     </nav>
   </aside>
 </template>
