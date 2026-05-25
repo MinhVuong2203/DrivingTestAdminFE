@@ -1,0 +1,255 @@
+
+.fb-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fb-floating-close {
+  position: fixed;
+  top: 22px;
+  left: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  border: none;
+  background: #3a3b3c;
+  color: #fff;
+  font-size: 34px;
+  cursor: pointer;
+}
+
+.fb-post-modal {
+  width: min(780px, 92vw);
+  max-height: 88vh;
+  background: #242526;
+  color: #e4e6eb;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.45);
+}
+
+.fb-modal-header {
+  height: 64px;
+  border-bottom: 1px solid #3e4042;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.fb-modal-header h3 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.fb-close-btn {
+  position: absolute;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 999px;
+  background: #3a3b3c;
+  color: #e4e6eb;
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.fb-modal-body {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.fb-post-section {
+  padding: 16px;
+  border-bottom: 1px solid #3e4042;
+}
+
+.fb-author-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fb-author-row img,
+.fb-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.fb-avatar {
+  background: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+
+.fb-author-row h4 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.fb-author-row span {
+  font-size: 13px;
+  color: #b0b3b8;
+}
+
+.fb-post-content {
+  margin: 14px 0;
+  white-space: pre-line;
+  line-height: 1.5;
+}
+
+.fb-post-image {
+  display: block;
+  width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+  background: #000;
+  border-radius: 4px;
+}
+
+.fb-post-stats {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #3e4042;
+  display: flex;
+  justify-content: space-between;
+  color: #b0b3b8;
+  font-size: 14px;
+}
+
+.fb-comment-section {
+  padding: 14px 16px 90px;
+}
+
+.fb-comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.fb-comment-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.fb-comment-item img,
+.fb-comment-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.fb-comment-avatar {
+  background: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+
+.fb-comment-main {
+  flex: 1;
+}
+
+.fb-comment-bubble {
+  display: inline-block;
+  max-width: 100%;
+  background: #3a3b3c;
+  border-radius: 18px;
+  padding: 9px 13px;
+}
+
+.fb-comment-bubble h5 {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: #e4e6eb;
+}
+
+.fb-comment-bubble p {
+  margin: 0;
+  color: #e4e6eb;
+  line-height: 1.45;
+}
+
+.fb-comment-actions {
+  margin-top: 4px;
+  display: flex;
+  gap: 12px;
+  color: #b0b3b8;
+  font-size: 12px;
+  padding-left: 12px;
+}
+
+.fb-comment-actions b {
+  cursor: pointer;
+}
+
+.fb-comment-input {
+  border-top: 1px solid #3e4042;
+  background: #242526;
+  padding: 12px 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.fb-input-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: #4f46e5;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+
+.fb-comment-input input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: #3a3b3c;
+  color: #e4e6eb;
+  border-radius: 999px;
+  padding: 13px 16px;
+}
+
+.fb-comment-input input::placeholder {
+  color: #b0b3b8;
+}
+
+.fb-comment-input button {
+  border: none;
+  background: transparent;
+  color: #2d88ff;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.comment-state,
+.comment-error {
+  text-align: center;
+  padding: 32px;
+  color: #b0b3b8;
+}
+
+.comment-error {
+  color: #ff6b6b;
+}
