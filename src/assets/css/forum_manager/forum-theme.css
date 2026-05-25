@@ -1,0 +1,38 @@
+:root {
+  --forum-bg: #f4f7fb;
+  --forum-card: #ffffff;
+  --forum-card-soft: #f9fafb;
+  --forum-text: #111827;
+  --forum-muted: #6b7280;
+  --forum-border: #e5e7eb;
+  --forum-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+}
+
+.dark,
+[data-theme='dark'],
+body.dark {
+  --forum-bg: #0b1220;
+  --forum-card: #111827;
+  --forum-card-soft: #1f2937;
+  --forum-text: #f9fafb;
+  --forum-muted: #9ca3af;
+  --forum-border: #374151;
+  --forum-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+}
+
+.forum-page {
+  background: var(--forum-bg);
+  color: var(--forum-text);
+}
+
+.forum-page h2,
+.forum-page h3,
+.forum-page h4,
+.forum-page h5 {
+  color: var(--forum-text);
+}
+
+.forum-page p,
+.forum-page span {
+  color: inherit;
+}
