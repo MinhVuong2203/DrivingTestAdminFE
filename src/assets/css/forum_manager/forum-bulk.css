@@ -1,0 +1,72 @@
+.bulk-actions {
+  background: var(--forum-card);
+  color: var(--forum-text);
+  border: 1px solid var(--forum-border);
+  border-radius: 16px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  box-shadow: var(--forum-shadow);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.select-all,
+.post-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--forum-text);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.select-all input,
+.post-checkbox input {
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+}
+
+.bulk-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.selected-count {
+  color: #4f46e5;
+  font-weight: 800;
+}
+
+.clear-btn {
+  border: none;
+  background: var(--forum-card-soft);
+  color: var(--forum-text);
+  padding: 9px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.delete-selected-btn {
+  border: none;
+  background: #dc2626;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.delete-selected-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.post-checkbox {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--forum-border);
+}
