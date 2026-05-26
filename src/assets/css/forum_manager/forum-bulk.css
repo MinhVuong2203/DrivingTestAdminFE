@@ -70,3 +70,85 @@
   padding-bottom: 12px;
   border-bottom: 1px solid var(--forum-border);
 }
+
+.delete-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.delete-modal {
+  width: min(460px, 100%);
+  background: var(--forum-card);
+  color: var(--forum-text);
+  border: 1px solid var(--forum-border);
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+  text-align: center;
+}
+
+.delete-icon {
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: #fee2e2;
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 900;
+}
+
+.delete-modal h3 {
+  margin: 0 0 10px;
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--forum-text);
+}
+
+.delete-modal p {
+  margin: 0;
+  color: var(--forum-muted);
+  line-height: 1.6;
+}
+
+.delete-modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.cancel-modal-btn,
+.confirm-delete-btn {
+  flex: 1;
+  border: none;
+  padding: 13px 16px;
+  border-radius: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.cancel-modal-btn {
+  background: var(--forum-card-soft);
+  color: var(--forum-text);
+}
+
+.confirm-delete-btn {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.cancel-modal-btn:disabled,
+.confirm-delete-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
