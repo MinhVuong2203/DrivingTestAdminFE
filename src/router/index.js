@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import UsersView from '@/views/user/UsersView.vue'
 import VipManagementView from '@/views/vip/VipManagementView.vue'
 import ForumManagerView from '@/views/forum_manager/ForumManagerView.vue'
+import DownloadAppView from '@/views/DownloadAppView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -18,12 +19,16 @@ const router = createRouter({
     },
     {
       path: '/vip-management',
-      component: VipManagementView
+      component: VipManagementView,
     },
     {
       path: '/forum-manager',
-      component: ForumManagerView
-    }
+      component: ForumManagerView,
+    },
+    {
+      path: '/download-app',
+      component: DownloadAppView,
+    },
   ],
 })
 
