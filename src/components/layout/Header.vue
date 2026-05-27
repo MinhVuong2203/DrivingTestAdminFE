@@ -1,16 +1,25 @@
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { signOut } from 'firebase/auth'
 
 import { useThemeStore } from '@/stores/themeStore'
 import { useSidebarStore } from '@/stores/sidebarStore'
+import { auth } from '@/services/firebase'
 
 const themeStore = useThemeStore()
 const sidebarStore = useSidebarStore()
+const router = useRouter()
 
 const showDropdown = ref(false)
 
 const toggleDropdown = () => {
   showDropdown.value = !showDropdown.value
+}
+
+const logout = async () => {
+  await signOut(auth)
+  router.push('/login')
 }
 </script>
 
@@ -44,10 +53,10 @@ const toggleDropdown = () => {
         </div>
 
         <div v-if="showDropdown" class="user-dropdown">
-          <a href="#">Hồ sơ</a>
-          <a href="#">Cài đặt</a>
-          <hr />
-          <a href="#">Đăng xuất</a>
+          <a class="dropdown-item" href="#">Hồ sơ</a>
+          <a class="dropdown-item" href="#">Cài đặt</a>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item logout" type="button" @click.stop="logout">Đăng xuất</button>
         </div>
       </div>
     </div>

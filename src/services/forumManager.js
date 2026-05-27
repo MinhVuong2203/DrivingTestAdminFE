@@ -1,17 +1,17 @@
 import api from "./api";
 
 export const getPosts = async () => {
-    const res = await api.get('/api/Post');
+    const res = await api.get('/api/Post/admin');
     return res.data
 }
 
 export const getCommentsByPostId = async (postId) => {
-  const res = await api.get(`/api/Comment/${postId}`)
+  const res = await api.get(`/api/Comment/admin/${postId}`)
   return res.data
 }
 
 export const deletePost = async (postId) => {
-  const res = await api.delete(`/api/Post/${postId}`)
+  const res = await api.delete(`/api/Post/admin/${postId}`)
   return res.data
 }
 
