@@ -5,8 +5,11 @@ export const getUsers = async () => {
   return res.data
 }
 
-export const updateUserStatus = async (uid, status) => {
-  return await api.patch(`/api/users/${uid}/status`, JSON.stringify(status), {
+export const updateUserStatus = async (uid, status, lockDays = null) => {
+  return await api.patch(`/api/users/${uid}/status`, {
+    status,
+    lockDays,
+  }, {
     headers: {
       'Content-Type': 'application/json',
     },
