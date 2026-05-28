@@ -143,6 +143,12 @@
   color: var(--warning);
 }
 
+.unlock-at {
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
 /* ===== PAGINATION ===== */
 .pagination {
   margin-top: 20px;

@@ -13,6 +13,7 @@ export class User {
     this.email = data.email || ''
     this.role = data.role || ''
     this.status = data.status || ''
+    this.unlockAt = data.unlockAt || null
     this.photoURL = data.photoURL || ''
     this.createdAt = data.createdAt || null
     this.vipUser = data.vipUser || null
