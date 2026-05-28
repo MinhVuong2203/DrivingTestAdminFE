@@ -70,6 +70,15 @@ const getSortIcon = (field) => {
   return sortAsc.value ? 'bi bi-arrow-up sort-icon active' : 'bi bi-arrow-down sort-icon active'
 }
 
+const formatDateTime = (value) => {
+  if (!value) return '-'
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+
+  return date.toLocaleString('vi-VN')
+}
+
 // ==========================
 // QUICK FILTER
 // ==========================
@@ -163,7 +172,7 @@ const prevPage = () => {
 // ==========================
 // UPDATE STATUS
 // ==========================
-const confirmToggleStatus = async (user, newStatus) => {
+/* const oldConfirmToggleStatus = async (user, newStatus) => {
   const action = newStatus === 'locked' ? 'khóa' : 'mở'
 
   const ok = confirm(`Bạn có chắc muốn ${action} tài khoản ${user.displayName}?`)
@@ -173,11 +182,59 @@ const confirmToggleStatus = async (user, newStatus) => {
   await toggleStatus(user, newStatus)
 }
 
-const toggleStatus = async (user, newStatus) => {
+const oldToggleStatus = async (user, newStatus) => {
   try {
     await updateUserStatus(user.uid, newStatus)
 
     user.status = newStatus
+
+    toastStore.success(`Đã cập nhật ${user.displayName}`)
+  } catch {
+    toastStore.error('Cập nhật trạng thái thất bại')
+  }
+}
+*/
+const confirmToggleStatus = async (user, newStatus) => {
+  let lockDays = null
+
+  if (newStatus === 'locked') {
+    const rawDays = prompt(
+      'Nhập số ngày khóa tài khoản. Bỏ trống nếu muốn khóa vô thời hạn.',
+    )
+
+    if (rawDays === null) return
+
+    const trimmedDays = rawDays.trim()
+    if (trimmedDays !== '') {
+      const parsedDays = Number(trimmedDays)
+
+      if (!Number.isInteger(parsedDays) || parsedDays <= 0) {
+        toastStore.error('Số ngày khóa phải là số nguyên lớn hơn 0')
+        return
+      }
+
+      lockDays = parsedDays
+    }
+  }
+
+  const action = newStatus === 'locked' ? 'khóa' : 'mở khóa'
+  const durationText = lockDays ? ` trong ${lockDays} ngày` : ''
+  const ok = confirm(`Bạn có chắc muốn ${action} tài khoản ${user.displayName}${durationText}?`)
+
+  if (!ok) return
+
+  await toggleStatus(user, newStatus, lockDays)
+}
+
+const toggleStatus = async (user, newStatus, lockDays = null) => {
+  try {
+    await updateUserStatus(user.uid, newStatus, lockDays)
+
+    user.status = newStatus
+    user.unlockAt =
+      newStatus === 'locked' && lockDays
+        ? new Date(Date.now() + lockDays * 24 * 60 * 60 * 1000).toISOString()
+        : null
 
     toastStore.success(`Đã cập nhật ${user.displayName}`)
   } catch {
@@ -250,6 +307,8 @@ const toggleStatus = async (user, newStatus) => {
 
           <th>Trạng thái</th>
 
+          <th>Mở khóa lúc</th>
+
           <th />
         </tr>
       </thead>
@@ -306,6 +365,11 @@ const toggleStatus = async (user, newStatus) => {
             </span>
           </td>
 
+          <!-- UNLOCK AT -->
+          <td>
+            {{ formatDateTime(u.unlockAt) }}
+          </td>
+
           <!-- ACTION -->
           <td>
             <button
@@ -351,6 +415,10 @@ const toggleStatus = async (user, newStatus) => {
         <span class="vip">
           {{ u.vipUser?.name || '-' }}
         </span>
+
+        <p class="unlock-at">
+          Mở khóa: {{ formatDateTime(u.unlockAt) }}
+        </p>
 
         <div class="card-actions">
           <button
