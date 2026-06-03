@@ -1,13 +1,13 @@
 import axios from 'axios'
 import { signOut } from 'firebase/auth'
 import { auth } from './firebase'
-// const api = axios.create({
-//   baseURL: 'http://localhost:7211',
-// })
-
 const api = axios.create({
-  baseURL: 'https://drivingtestadmin-production.up.railway.app',
+  baseURL: 'http://localhost:7211',
 })
+
+// const api = axios.create({
+//   baseURL: 'https://drivingtestadmin-production.up.railway.app',
+// })
 
 // Firenbase cấp ID Token dạng JWT, nên backend có thể giải mã và 
 // xác thực mà không cần phải gọi Firebase API để kiểm tra token 

@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { signOut } from 'firebase/auth'
 
 import { useThemeStore } from '@/stores/themeStore'
@@ -10,6 +10,7 @@ import { auth } from '@/services/firebase'
 const themeStore = useThemeStore()
 const sidebarStore = useSidebarStore()
 const router = useRouter()
+const route = useRoute()
 
 const showDropdown = ref(false)
 
@@ -27,21 +28,21 @@ const logout = async () => {
   <header class="main-header">
     <div class="header-left">
       <button class="sidebar-toggle" @click="sidebarStore.toggleSidebar()">
-        ☰
+        <i class="bi bi-list"></i>
       </button>
 
       <div class="header-breadcrumb">
-        Trang chủ
+        {{ route.meta.title || 'Trang chủ' }}
       </div>
     </div>
 
     <div class="header-center">
-      <input class="search-input" placeholder="Tìm kiếm..." />
+      <input class="search-input" placeholder="Tim kiem..." />
     </div>
 
     <div class="header-right">
       <button class="header-btn" @click="themeStore.toggleTheme()">
-        {{ themeStore.isDark ? '☀️' : '🌙' }}
+        <i class="bi" :class="themeStore.isDark ? 'bi-sun' : 'bi-moon'"></i>
       </button>
 
       <div class="header-user" @click="toggleDropdown">
@@ -49,14 +50,14 @@ const logout = async () => {
 
         <div class="user-info">
           <span class="user-name">Admin</span>
-          <span class="user-role">Quản trị viên</span>
+          <span class="user-role">Quan tri vien</span>
         </div>
 
         <div v-if="showDropdown" class="user-dropdown">
-          <a class="dropdown-item" href="#">Hồ sơ</a>
-          <a class="dropdown-item" href="#">Cài đặt</a>
+          <a class="dropdown-item" href="#">Ho so</a>
+          <a class="dropdown-item" href="#">Cai dat</a>
           <div class="dropdown-divider"></div>
-          <button class="dropdown-item logout" type="button" @click.stop="logout">Đăng xuất</button>
+          <button class="dropdown-item logout" type="button" @click.stop="logout">Dang xuat</button>
         </div>
       </div>
     </div>
