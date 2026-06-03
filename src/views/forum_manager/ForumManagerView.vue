@@ -284,6 +284,10 @@ const toggleKeyword = async (keyword) => {
   }
 }
 
+function isVipPost(post) {
+  return post.authorIsVip === true
+}
+
 onMounted(() => {
   loadPosts()
   loadModerationData()
@@ -387,7 +391,10 @@ onMounted(() => {
             v-for="post in pagedPosts"
             :key="post.postId"
             class="post-card"
-            :class="{ selected: selectedPostIds.includes(post.postId) }"
+            :class="{
+              selected: selectedPostIds.includes(post.postId),
+              vip: isVipPost(post)
+            }"
           >
             <label class="post-checkbox" @click.stop>
               <input
@@ -410,7 +417,12 @@ onMounted(() => {
                 </div>
 
                 <div>
-                  <h3>{{ post.authorName || 'Người dùng' }}</h3>
+                  <h3>
+                    {{ post.authorName || 'Người dùng' }}
+                    <span v-if="isVipPost(post)" class="vip-badge">
+                      VIP
+                    </span>
+                  </h3>
                   <span>{{ formatDate(post.createdAt) }}</span>
                 </div>
               </div>
