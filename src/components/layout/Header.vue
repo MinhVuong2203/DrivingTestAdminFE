@@ -12,15 +12,18 @@ import { getInitial } from '@/utils/stringHelper'
 const themeStore = useThemeStore()
 const sidebarStore = useSidebarStore()
 const router = useRouter()
+const route = useRoute()
 
 const showDropdown = ref(false)
 const showProfileModal = ref(false)
 const adminProfile = ref(null)
 
-const displayName = computed(() => adminProfile.value?.displayName || auth.currentUser?.displayName || 'Admin')
+const displayName = computed(
+  () => adminProfile.value?.displayName || auth.currentUser?.displayName || 'Admin',
+)
 const email = computed(() => adminProfile.value?.email || auth.currentUser?.email || '-')
 const photoURL = computed(() => adminProfile.value?.photoURL || auth.currentUser?.photoURL || '')
-const roleLabel = computed(() => adminProfile.value?.isImportant ? 'Admin' : 'Quản trị viên')
+const roleLabel = computed(() => (adminProfile.value?.isImportant ? 'Admin' : 'Quản trị viên'))
 const statusLabel = computed(() => adminProfile.value?.status || 'active')
 
 const getAuthUser = () =>
@@ -81,16 +84,16 @@ onMounted(loadAdminProfile)
   <header class="main-header">
     <div class="header-left">
       <button class="sidebar-toggle" @click="sidebarStore.toggleSidebar()">
-        ☰
+        <i class="bi bi-list"></i>
       </button>
 
       <div class="header-breadcrumb">
-        Trang chủ
+        {{ route.meta.title || 'Trang chủ' }}
       </div>
     </div>
 
     <div class="header-center">
-      <input class="search-input" placeholder="Tìm kiếm..." />
+      <input class="search-input" placeholder="Tim kiem..." />
     </div>
 
     <div class="header-right">
@@ -103,6 +106,7 @@ onMounted(loadAdminProfile)
         <div v-else class="user-avatar">{{ getInitial(displayName) }}</div>
 
         <div class="user-info">
+          <<<<<<< HEAD
           <span class="user-name">{{ displayName }}</span>
           <span class="user-role">{{ roleLabel }}</span>
         </div>
@@ -121,6 +125,17 @@ onMounted(loadAdminProfile)
             <i class="bi bi-box-arrow-right"></i>
             <span>Đăng xuất</span>
           </button>
+          =======
+          <span class="user-name">Admin</span>
+          <span class="user-role">Quan tri vien</span>
+        </div>
+
+        <div v-if="showDropdown" class="user-dropdown">
+          <a class="dropdown-item" href="#">Ho so</a>
+          <a class="dropdown-item" href="#">Cai dat</a>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item logout" type="button" @click.stop="logout">Dang xuat</button>
+          >>>>>>> 2af75a1 (add dashboard for frontend)
         </div>
       </div>
     </div>
@@ -150,7 +165,6 @@ onMounted(loadAdminProfile)
             <span>Email</span>
             <strong>{{ email }}</strong>
           </div>
-
 
           <div class="profile-info-row">
             <span>Trạng thái</span>
