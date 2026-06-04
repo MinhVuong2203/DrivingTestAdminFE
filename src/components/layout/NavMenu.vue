@@ -56,8 +56,8 @@ watch(
       </div>
 
       <div class="brand-text">
-        Drive Prep Manager
-        <span class="brand-sub"> Admin Dashboard </span>
+        Manager
+        <span class="brand-sub">Kiến thức lái xe 600</span>
       </div>
     </div>
 
@@ -66,7 +66,7 @@ watch(
       <!-- DASHBOARD -->
       <router-link to="/" class="nav-item" active-class="active">
         <lord-icon
-          src="https://cdn.lordicon.com/utdckhgo.json"
+          src="https://cdn.lordicon.com/rpvomrgr.json"
           trigger="hover"
           delay="100"
           stroke="bold"
