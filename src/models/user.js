@@ -12,6 +12,7 @@ export class User {
     this.displayName = data.displayName || ''
     this.email = data.email || ''
     this.role = data.role || ''
+    this.isImportant = data.isImportant === true
     this.status = data.status || ''
     this.unlockAt = data.unlockAt || null
     this.photoURL = data.photoURL || ''

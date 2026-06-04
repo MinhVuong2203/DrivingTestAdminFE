@@ -31,6 +31,23 @@
   min-width: 180px;
 }
 
+.admin-mode-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--bg-surface-2);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-mode-badge.root {
+  background: rgba(37, 99, 235, 0.14);
+  color: #2563eb;
+}
+
 /* ===== VIEW TOGGLE ===== */
 .view-toggle {
   display: flex;
@@ -231,9 +248,35 @@
   color: var(--danger);
 }
 
+.role-badge {
+  gap: 5px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.role-badge.admin {
+  background: rgba(37, 99, 235, 0.14);
+  color: #2563eb;
+}
+
+.role-badge.user {
+  background: var(--bg-surface-2);
+  color: var(--text-secondary);
+}
+
+.action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* ===== BUTTON ===== */
 .btn-danger,
-.btn-success {
+.btn-success,
+.btn-admin,
+.btn-warning {
   border: none;
   padding: 6px 10px;
   border-radius: 8px;
@@ -251,9 +294,26 @@
   color: white;
 }
 
+.btn-admin {
+  background: #2563eb;
+  color: white;
+}
+
+.btn-warning {
+  background: var(--warning);
+  color: white;
+}
+
 .btn-danger:hover,
-.btn-success:hover {
+.btn-success:hover,
+.btn-admin:hover,
+.btn-warning:hover {
   filter: brightness(0.9);
+}
+
+.pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 /* ===== SORT ICON ===== */
