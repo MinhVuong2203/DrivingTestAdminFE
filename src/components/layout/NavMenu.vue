@@ -77,6 +77,20 @@ watch(
         <span class="nav-label"> TỔNG QUAN </span>
       </router-link>
 
+      <!-- STATISTICS -->
+      <router-link to="/statistics" class="nav-item" active-class="active">
+        <lord-icon
+          src="https://cdn.lordicon.com/abwrkdvl.json"
+          trigger="hover"
+          delay="100"
+          stroke="bold"
+          colors="primary:#242424,secondary:#e83a30"
+          class="nav-icon"
+        >
+        </lord-icon>
+        <span class="nav-label"> THỐNG KÊ </span>
+      </router-link>
+
       <!-- USERS -->
       <router-link to="/users" class="nav-item" active-class="active">
         <lord-icon

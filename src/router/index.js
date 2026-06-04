@@ -7,6 +7,7 @@ import UsersView from '@/views/user/UsersView.vue'
 import VipManagementView from '@/views/vip/VipManagementView.vue'
 import ForumManagerView from '@/views/forum_manager/ForumManagerView.vue'
 import DownloadAppView from '@/views/DownloadAppView.vue'
+import StatisticsView from '@/views/statistics/StatisticsView.vue'
 import LoginView from '@/views/LoginView.vue'
 
 import { auth, db } from '@/services/firebase'
@@ -38,18 +39,28 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
+      meta: { title: 'Tổng quan' },
+    },
+    {
+      path: '/statistics',
+      name: 'statistics',
+      component: StatisticsView,
+      meta: { title: 'Thống kê' },
     },
     {
       path: '/users',
       component: UsersView,
+      meta: { title: 'Người dùng' },
     },
     {
       path: '/vip-management',
       component: VipManagementView,
+      meta: { title: 'Gói VIP' },
     },
     {
       path: '/forum-manager',
       component: ForumManagerView,
+      meta: { title: 'Diễn đàn' },
     },
     {
       path: '/download-app',

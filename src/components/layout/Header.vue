@@ -12,6 +12,7 @@ import { getInitial } from '@/utils/stringHelper'
 const themeStore = useThemeStore()
 const sidebarStore = useSidebarStore()
 const router = useRouter()
+const route = useRoute()
 
 const showDropdown = ref(false)
 const showProfileModal = ref(false)
@@ -81,16 +82,16 @@ onMounted(loadAdminProfile)
   <header class="main-header">
     <div class="header-left">
       <button class="sidebar-toggle" @click="sidebarStore.toggleSidebar()">
-        ☰
+        <i class="bi bi-list"></i>
       </button>
 
       <div class="header-breadcrumb">
-        Trang chủ
+        {{ route.meta.title || 'Trang chủ' }}
       </div>
     </div>
 
     <div class="header-center">
-      <input class="search-input" placeholder="Tìm kiếm..." />
+      <input class="search-input" placeholder="Tim kiem..." />
     </div>
 
     <div class="header-right">
