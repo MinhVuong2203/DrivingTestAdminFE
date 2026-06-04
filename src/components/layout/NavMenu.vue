@@ -66,14 +66,14 @@ watch(
       <!-- DASHBOARD -->
       <router-link to="/" class="nav-item" active-class="active">
         <lord-icon
-          src="https://cdn.lordicon.com/zldpstex.json"
+          src="https://cdn.lordicon.com/utdckhgo.json"
           trigger="hover"
           delay="100"
           stroke="bold"
           colors="primary:#242424,secondary:#e83a30"
           class="nav-icon"
         >
-        </lord-icon>
+        </lord-icon> 
         <span class="nav-label"> TỔNG QUAN </span>
       </router-link>
 
@@ -108,7 +108,7 @@ watch(
 
       <!-- FORUM -->
       <router-link to="/forum-manager" class="nav-item" active-class="active">
-        <lord-icon
+        <!-- <lord-icon
           src="https://cdn.lordicon.com/zldpstex.json"
           trigger="hover"
           delay="100"
@@ -116,6 +116,15 @@ watch(
           colors="primary:#242424,secondary:#e83a30"
           class="nav-icon"
         >
+        </lord-icon> -->
+        <lord-icon
+          src="https://cdn.lordicon.com/aksvbzmu.json"
+          trigger="hover"
+          delay="100"
+          stroke="bold"
+          colors="primary:#242424,secondary:#e83a30"
+          class="nav-icon"
+          >
         </lord-icon>
         <span class="nav-label"> DIỄN ĐÀN </span>
       </router-link>

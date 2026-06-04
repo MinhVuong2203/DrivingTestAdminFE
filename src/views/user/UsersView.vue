@@ -1,9 +1,12 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { onAuthStateChanged } from 'firebase/auth'
+import { collection, doc, getDoc, getDocs, limit, query, where } from 'firebase/firestore'
 import '@/assets/css/user/list-user.css'
 import MainLayout from '@/components/layout/MainLayout.vue'
 
-import { getUsers, updateUserStatus } from '@/services/userService'
+import { getUsers, updateUserRole, updateUserStatus } from '@/services/userService'
+import { auth, db } from '@/services/firebase'
 import { getInitial } from '@/utils/stringHelper'
 import { useLoadingStore } from '@/stores/loadingStore'
 import { useToastStore } from '@/stores/toastStore'
@@ -12,13 +15,19 @@ const loadingStore = useLoadingStore()
 const toastStore = useToastStore()
 
 const users = ref([])
+const currentAdmin = ref(null)
 
 const searchText = ref('')
 const viewMode = ref('table')
 const quickFilter = ref('')
+const roleFilter = ref('')
 
 const currentPage = ref(1)
-const pageSize = 10
+const pageSize = 4
+const currentCursor = ref(null)
+const nextCursor = ref(null)
+const hasNextPage = ref(false)
+const cursorHistory = ref([])
 
 const sortField = ref('createdAt')
 const sortAsc = ref(false)
@@ -27,15 +36,85 @@ const fromDate = ref(null)
 const toDate = ref(null)
 
 const errorImages = ref(new Set())
+let searchTimer = null
 
-// ==========================
-// LOAD USERS
-// ==========================
-const loadUsers = async () => {
+const isRootAdmin = computed(() => currentAdmin.value?.isImportant === true)
+
+const getAuthUser = () =>
+  new Promise((resolve) => {
+    if (auth.currentUser) {
+      resolve(auth.currentUser)
+      return
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      unsubscribe()
+      resolve(user)
+    })
+  })
+
+const loadCurrentAdmin = async () => {
+  const authUser = await getAuthUser()
+  const uid = authUser?.uid
+  if (!uid) return
+
+  const snap = await getDoc(doc(db, 'users', uid))
+  if (snap.exists()) {
+    currentAdmin.value = { uid: snap.id, ...snap.data() }
+  }
+
+  if (currentAdmin.value?.isImportant === true || !authUser.email) {
+    return
+  }
+
+  const emailQuery = query(
+    collection(db, 'users'),
+    where('email', '==', authUser.email),
+    limit(1),
+  )
+  const emailSnap = await getDocs(emailQuery)
+  const emailDoc = emailSnap.docs[0]
+
+  if (emailDoc?.exists()) {
+    currentAdmin.value = { uid: emailDoc.id, ...emailDoc.data() }
+  }
+}
+
+const toQueryDate = (value) => {
+  if (!value) return null
+  return value instanceof Date ? value.toISOString() : new Date(value).toISOString()
+}
+
+const buildQueryParams = (cursor = currentCursor.value) => ({
+  pageSize,
+  cursor,
+  search: searchText.value.trim() || null,
+  role: roleFilter.value || null,
+  fromDate: toQueryDate(fromDate.value),
+  toDate: toQueryDate(toDate.value),
+  sortField: sortField.value,
+  sortDirection: sortAsc.value ? 'asc' : 'desc',
+})
+
+const isRootAdminUser = (user) =>
+  user.isImportant === true ||
+  (currentAdmin.value?.isImportant === true &&
+    (user.uid === currentAdmin.value.uid || user.email === currentAdmin.value.email))
+
+const loadUsers = async (cursor = currentCursor.value) => {
   loadingStore.show()
 
   try {
-    users.value = await getUsers()
+    const result = await getUsers(buildQueryParams(cursor))
+    users.value = (result.items || []).map((user) => {
+      const isCurrentRootAdmin =
+        currentAdmin.value?.isImportant === true &&
+        (user.uid === currentAdmin.value.uid || user.email === currentAdmin.value.email)
+
+      return isCurrentRootAdmin ? { ...user, isImportant: true } : user
+    }).filter((user) => !isRootAdminUser(user))
+    nextCursor.value = result.nextCursor || null
+    hasNextPage.value = result.hasNextPage === true
   } catch (err) {
     toastStore.error('Không tải được danh sách user')
   } finally {
@@ -43,25 +122,32 @@ const loadUsers = async () => {
   }
 }
 
-onMounted(loadUsers)
+const resetPaginationAndLoad = async () => {
+  currentPage.value = 1
+  currentCursor.value = null
+  nextCursor.value = null
+  cursorHistory.value = []
+  await loadUsers(null)
+}
 
-// ==========================
-// IMAGE FALLBACK
-// ==========================
+onMounted(async () => {
+  await loadCurrentAdmin()
+  await loadUsers()
+})
+
 const onImageError = (uid) => {
   errorImages.value.add(uid)
 }
 
-// ==========================
-// SORT
-// ==========================
-const sort = (field) => {
+const sort = async (field) => {
   if (sortField.value === field) {
     sortAsc.value = !sortAsc.value
   } else {
     sortField.value = field
     sortAsc.value = true
   }
+
+  await resetPaginationAndLoad()
 }
 
 const getSortIcon = (field) => {
@@ -79,10 +165,7 @@ const formatDateTime = (value) => {
   return date.toLocaleString('vi-VN')
 }
 
-// ==========================
-// QUICK FILTER
-// ==========================
-const applyQuickFilter = () => {
+const applyQuickFilter = async () => {
   const now = new Date()
 
   switch (quickFilter.value) {
@@ -104,97 +187,48 @@ const applyQuickFilter = () => {
       break
   }
 
-  toDate.value = now
-  currentPage.value = 1
-}
-
-// ==========================
-// FILTER + SORT
-// ==========================
-const processedUsers = computed(() => {
-  let filtered = users.value.filter((u) => {
-    const matchSearch =
-      !searchText.value ||
-      u.displayName?.toLowerCase().includes(searchText.value.toLowerCase()) ||
-      u.email?.toLowerCase().includes(searchText.value.toLowerCase())
-
-    const createdAt = u.createdAt ? new Date(u.createdAt) : null
-
-    const matchDate =
-      (!fromDate.value || createdAt >= fromDate.value) &&
-      (!toDate.value || createdAt <= toDate.value)
-
-    return matchSearch && matchDate
-  })
-
-  filtered.sort((a, b) => {
-    const field = sortField.value
-
-    let valueA = a[field]
-    let valueB = b[field]
-
-    if (field === 'createdAt') {
-      valueA = valueA ? new Date(valueA) : new Date(0)
-      valueB = valueB ? new Date(valueB) : new Date(0)
-    }
-
-    if (valueA < valueB) return sortAsc.value ? -1 : 1
-
-    if (valueA > valueB) return sortAsc.value ? 1 : -1
-
-    return 0
-  })
-
-  return filtered
-})
-
-// ==========================
-// PAGINATION
-// ==========================
-const pagedUsers = computed(() => {
-  const start = (currentPage.value - 1) * pageSize
-
-  return processedUsers.value.slice(start, start + pageSize)
-})
-
-const totalPages = computed(() => {
-  return Math.ceil(processedUsers.value.length / pageSize)
-})
-
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) currentPage.value++
-}
-
-const prevPage = () => {
-  if (currentPage.value > 1) currentPage.value--
-}
-
-// ==========================
-// UPDATE STATUS
-// ==========================
-/* const oldConfirmToggleStatus = async (user, newStatus) => {
-  const action = newStatus === 'locked' ? 'khóa' : 'mở'
-
-  const ok = confirm(`Bạn có chắc muốn ${action} tài khoản ${user.displayName}?`)
-
-  if (!ok) return
-
-  await toggleStatus(user, newStatus)
-}
-
-const oldToggleStatus = async (user, newStatus) => {
-  try {
-    await updateUserStatus(user.uid, newStatus)
-
-    user.status = newStatus
-
-    toastStore.success(`Đã cập nhật ${user.displayName}`)
-  } catch {
-    toastStore.error('Cập nhật trạng thái thất bại')
+  if (quickFilter.value) {
+    toDate.value = now
   }
+
+  await resetPaginationAndLoad()
 }
-*/
+
+watch(searchText, () => {
+  window.clearTimeout(searchTimer)
+  searchTimer = window.setTimeout(() => {
+    resetPaginationAndLoad()
+  }, 350)
+})
+
+const nextPage = async () => {
+  if (!hasNextPage.value || !nextCursor.value) return
+
+  cursorHistory.value.push(currentCursor.value)
+  currentCursor.value = nextCursor.value
+  currentPage.value++
+  await loadUsers(currentCursor.value)
+}
+
+const prevPage = async () => {
+  if (currentPage.value <= 1) return
+
+  currentCursor.value = cursorHistory.value.pop() || null
+  currentPage.value--
+  await loadUsers(currentCursor.value)
+}
+
+const isAdminRole = (user) => user.role?.toLowerCase() === 'admin'
+const canManageAdminTarget = (user) => !isAdminRole(user) || isRootAdmin.value
+const canChangeRole = (user) =>
+  isRootAdmin.value && user.uid !== currentAdmin.value?.uid && user.isImportant !== true
+
 const confirmToggleStatus = async (user, newStatus) => {
+  if (!canManageAdminTarget(user)) {
+    toastStore.error('Admin thường không thể thao tác trên admin khác')
+    return
+  }
+
   let lockDays = null
 
   if (newStatus === 'locked') {
@@ -241,6 +275,23 @@ const toggleStatus = async (user, newStatus, lockDays = null) => {
     toastStore.error('Cập nhật trạng thái thất bại')
   }
 }
+
+const confirmChangeRole = async (user, role) => {
+  if (!canChangeRole(user)) return
+
+  const action = role === 'admin' ? 'thăng cấp admin' : 'hạ xuống user'
+  const ok = confirm(`Bạn có chắc muốn ${action} cho ${user.displayName}?`)
+  if (!ok) return
+
+  try {
+    await updateUserRole(user.uid, role)
+    user.role = role
+    user.isImportant = false
+    toastStore.success(`Đã cập nhật quyền ${user.displayName}`)
+  } catch {
+    toastStore.error('Cập nhật quyền thất bại')
+  }
+}
 </script>
 
 <template>
@@ -248,22 +299,25 @@ const toggleStatus = async (user, newStatus, lockDays = null) => {
     <h3 class="page-title">Quản lý người dùng</h3>
 
     <div class="toolbar">
-      <!-- LEFT -->
       <div class="toolbar-left">
-        <input v-model="searchText" placeholder="Tìm kiếm..." />
+        <input v-model="searchText" placeholder="Tìm kiếm theo tên/email..." />
 
         <select v-model="quickFilter" @change="applyQuickFilter">
           <option value="">Tất cả</option>
-
           <option value="week">Tuần này</option>
-
           <option value="month">Tháng này</option>
-
           <option value="year">Năm nay</option>
         </select>
+
+        <select v-model="roleFilter" @change="resetPaginationAndLoad">
+          <option value="">Tất cả vai trò</option>
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+
+        
       </div>
 
-      <!-- RIGHT -->
       <div class="toolbar-right">
         <div class="view-toggle">
           <i
@@ -281,41 +335,34 @@ const toggleStatus = async (user, newStatus, lockDays = null) => {
       </div>
     </div>
 
-    <!-- TABLE -->
     <table v-if="viewMode === 'table'" class="my-table">
       <thead>
         <tr>
           <th @click="sort('displayName')">
             Người dùng
-
             <i :class="getSortIcon('displayName')" />
           </th>
 
           <th @click="sort('email')">
             Email
-
             <i :class="getSortIcon('email')" />
           </th>
 
           <th @click="sort('createdAt')">
             Ngày tạo
-
             <i :class="getSortIcon('createdAt')" />
           </th>
 
+          <th>Vai trò</th>
           <th>VIP</th>
-
           <th>Trạng thái</th>
-
           <th>Mở khóa lúc</th>
-
           <th />
         </tr>
       </thead>
 
       <tbody>
-        <tr v-for="u in pagedUsers" :key="u.uid">
-          <!-- USER -->
+        <tr v-for="u in users" :key="u.uid">
           <td>
             <div class="user-css">
               <div class="avatar-wrapper">
@@ -337,60 +384,80 @@ const toggleStatus = async (user, newStatus, lockDays = null) => {
             </div>
           </td>
 
-          <!-- EMAIL -->
-          <td>
-            {{ u.email }}
-          </td>
+          <td>{{ u.email }}</td>
 
-          <!-- CREATED -->
           <td>
             {{ u.createdAt ? new Date(u.createdAt).toLocaleDateString('vi-VN') : '-' }}
           </td>
 
-          <!-- VIP -->
+          <td>
+            <span class="badge role-badge" :class="isAdminRole(u) ? 'admin' : 'user'">
+              <i class="bi" :class="isAdminRole(u) ? 'bi-shield-lock' : 'bi-person'" />
+              {{ u.isImportant ? 'admin gốc' : u.role || 'user' }}
+            </span>
+          </td>
+
           <td>
             <span v-if="u.vipUser" class="badge-vip vip-badge-text">
               <i class="bi bi-star-fill" />
-
               {{ u.vipUser.name }}
             </span>
           </td>
 
-          <!-- STATUS -->
           <td>
             <span class="badge status-badge" :class="u.status === 'active' ? 'active' : 'locked'">
               <i class="bi" :class="u.status === 'active' ? 'bi-check-circle' : 'bi-lock'" />
-
               {{ u.status }}
             </span>
           </td>
 
-          <!-- UNLOCK AT -->
-          <td>
-            {{ formatDateTime(u.unlockAt) }}
-          </td>
+          <td>{{ formatDateTime(u.unlockAt) }}</td>
 
-          <!-- ACTION -->
           <td>
-            <button
-              v-if="u.status === 'active'"
-              class="btn-danger"
-              @click="confirmToggleStatus(u, 'locked')"
-            >
-              <i class="bi bi-lock" />
-            </button>
+            <div class="action-group">
+              <button
+                v-if="canManageAdminTarget(u) && u.status === 'active'"
+                class="btn-danger"
+                title="Khóa tài khoản"
+                @click="confirmToggleStatus(u, 'locked')"
+              >
+                <i class="bi bi-lock" />
+              </button>
 
-            <button v-else class="btn-success" @click="confirmToggleStatus(u, 'active')">
-              <i class="bi bi-unlock" />
-            </button>
+              <button
+                v-else-if="canManageAdminTarget(u)"
+                class="btn-success"
+                title="Mở khóa tài khoản"
+                @click="confirmToggleStatus(u, 'active')"
+              >
+                <i class="bi bi-unlock" />
+              </button>
+
+              <button
+                v-if="canChangeRole(u) && !isAdminRole(u)"
+                class="btn-admin"
+                title="Thăng cấp admin"
+                @click="confirmChangeRole(u, 'admin')"
+              >
+                <i class="bi bi-shield-plus" />
+              </button>
+
+              <button
+                v-if="canChangeRole(u) && isAdminRole(u)"
+                class="btn-warning"
+                title="Hạ xuống user"
+                @click="confirmChangeRole(u, 'user')"
+              >
+                <i class="bi bi-shield-minus" />
+              </button>
+            </div>
           </td>
         </tr>
       </tbody>
     </table>
 
-    <!-- CARD -->
     <div v-if="viewMode === 'card'" class="card-grid">
-      <div v-for="u in pagedUsers" :key="u.uid" class="user-card">
+      <div v-for="u in users" :key="u.uid" class="user-card">
         <div class="avatar-wrapper">
           <img
             v-if="u.photoURL && !errorImages.has(u.uid)"
@@ -404,45 +471,61 @@ const toggleStatus = async (user, newStatus, lockDays = null) => {
           </div>
         </div>
 
-        <h4>
-          {{ u.displayName }}
-        </h4>
+        <h4>{{ u.displayName }}</h4>
+        <p>{{ u.email }}</p>
 
-        <p>
-          {{ u.email }}
-        </p>
-
-        <span class="vip">
-          {{ u.vipUser?.name || '-' }}
+        <span class="badge role-badge" :class="isAdminRole(u) ? 'admin' : 'user'">
+          {{ u.isImportant ? 'admin gốc' : u.role || 'user' }}
         </span>
 
-        <p class="unlock-at">
-          Mở khóa: {{ formatDateTime(u.unlockAt) }}
-        </p>
+        <span class="vip">{{ u.vipUser?.name || '-' }}</span>
 
-        <div class="card-actions">
+        
+
+        <div class="card-actions action-group">
           <button
-            v-if="u.status === 'active'"
+            v-if="canManageAdminTarget(u) && u.status === 'active'"
             class="btn-danger"
+            title="Khóa tài khoản"
             @click="confirmToggleStatus(u, 'locked')"
           >
             <i class="bi bi-lock" />
           </button>
 
-          <button v-else class="btn-success" @click="confirmToggleStatus(u, 'active')">
+          <button
+            v-else-if="canManageAdminTarget(u)"
+            class="btn-success"
+            title="Mở khóa tài khoản"
+            @click="confirmToggleStatus(u, 'active')"
+          >
             <i class="bi bi-unlock" />
+          </button>
+
+          <button
+            v-if="canChangeRole(u) && !isAdminRole(u)"
+            class="btn-admin"
+            title="Thăng cấp admin"
+            @click="confirmChangeRole(u, 'admin')"
+          >
+            <i class="bi bi-shield-plus" />
+          </button>
+
+          <button
+            v-if="canChangeRole(u) && isAdminRole(u)"
+            class="btn-warning"
+            title="Hạ xuống user"
+            @click="confirmChangeRole(u, 'user')"
+          >
+            <i class="bi bi-shield-minus" />
           </button>
         </div>
       </div>
     </div>
 
-    <!-- PAGINATION -->
     <div class="pagination">
-      <button @click="prevPage">Prev</button>
-
-      <span> {{ currentPage }} / {{ totalPages }} </span>
-
-      <button @click="nextPage">Next</button>
+      <button :disabled="currentPage <= 1" @click="prevPage"><</button>
+      <span>Trang {{ currentPage }}</span>
+      <button :disabled="!hasNextPage" @click="nextPage">></button>
     </div>
   </MainLayout>
 </template>
