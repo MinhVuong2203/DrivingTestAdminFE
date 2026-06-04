@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 
@@ -8,6 +8,10 @@ import { useThemeStore } from '@/stores/themeStore'
 import { useSidebarStore } from '@/stores/sidebarStore'
 import { auth, db } from '@/services/firebase'
 import { getInitial } from '@/utils/stringHelper'
+
+defineOptions({
+  name: 'AppHeader',
+})
 
 const themeStore = useThemeStore()
 const sidebarStore = useSidebarStore()
@@ -92,9 +96,9 @@ onMounted(loadAdminProfile)
       </div>
     </div>
 
-    <div class="header-center">
+    <!-- <div class="header-center">
       <input class="search-input" placeholder="Tim kiem..." />
-    </div>
+    </div> -->
 
     <div class="header-right">
       <button class="header-btn" @click="themeStore.toggleTheme()">
