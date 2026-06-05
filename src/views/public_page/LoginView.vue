@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from '@/services/firebase'
+import api from '@/services/api'
 
 const router = useRouter()
 
@@ -12,6 +13,17 @@ const password = ref('')
 const showPassword = ref(false)
 const loading = ref(false)
 const errorMessage = ref('')
+const showForgotModal = ref(false)
+const forgotStep = ref('email')
+const forgotEmail = ref('')
+const forgotOtp = ref('')
+const newPassword = ref('')
+const confirmPassword = ref('')
+const showNewPassword = ref(false)
+const showConfirmPassword = ref(false)
+const forgotLoading = ref(false)
+const forgotMessage = ref('')
+const forgotError = ref('')
 
 const isActiveAccount = (status) => (status || 'active').toLowerCase() === 'active'
 
@@ -58,6 +70,100 @@ const login = async () => {
     errorMessage.value = 'Sai tài khoản hoặc mật khẩu'
   } finally {
     loading.value = false
+  }
+}
+
+const getApiMessage = (error, fallback) => {
+  const data = error.response?.data
+  if (typeof data === 'string') return data
+  return data?.message || fallback
+}
+
+const resetForgotForm = () => {
+  forgotStep.value = 'email'
+  forgotEmail.value = email.value.trim()
+  forgotOtp.value = ''
+  newPassword.value = ''
+  confirmPassword.value = ''
+  showNewPassword.value = false
+  showConfirmPassword.value = false
+  forgotMessage.value = ''
+  forgotError.value = ''
+}
+
+const openForgotPassword = () => {
+  resetForgotForm()
+  showForgotModal.value = true
+}
+
+const closeForgotPassword = () => {
+  showForgotModal.value = false
+  resetForgotForm()
+}
+
+const requestForgotOtp = async () => {
+  forgotMessage.value = ''
+  forgotError.value = ''
+
+  if (!forgotEmail.value.trim()) {
+    forgotError.value = 'Vui lòng nhập Gmail admin'
+    return
+  }
+
+  try {
+    forgotLoading.value = true
+    const res = await api.post('/api/admin/password-reset/request-otp', {
+      email: forgotEmail.value.trim(),
+    })
+    forgotStep.value = 'reset'
+    forgotMessage.value = res.data?.message || 'Nếu email hợp lệ, OTP đã được gửi đến Gmail của bạn'
+  } catch (error) {
+    console.error(error)
+    forgotError.value = getApiMessage(error, 'Không thể gửi OTP. Vui lòng thử lại sau')
+  } finally {
+    forgotLoading.value = false
+  }
+}
+
+const confirmPasswordReset = async () => {
+  forgotMessage.value = ''
+  forgotError.value = ''
+
+  if (!forgotEmail.value.trim() || !forgotOtp.value.trim() || !newPassword.value) {
+    forgotError.value = 'Vui lòng nhập đầy đủ email, OTP và mật khẩu mới'
+    return
+  }
+
+  if (newPassword.value.length < 6) {
+    forgotError.value = 'Mật khẩu mới phải có ít nhất 6 ký tự'
+    return
+  }
+
+  if (newPassword.value !== confirmPassword.value) {
+    forgotError.value = 'Mật khẩu xác nhận không khớp'
+    return
+  }
+
+  try {
+    forgotLoading.value = true
+    const res = await api.post('/api/admin/password-reset/confirm', {
+      email: forgotEmail.value.trim(),
+      otp: forgotOtp.value.trim(),
+      newPassword: newPassword.value,
+    })
+    email.value = forgotEmail.value.trim()
+    password.value = ''
+    forgotMessage.value = res.data?.message || 'Đổi mật khẩu thành công'
+
+    setTimeout(() => {
+      showForgotModal.value = false
+      resetForgotForm()
+    }, 900)
+  } catch (error) {
+    console.error(error)
+    forgotError.value = getApiMessage(error, 'Không thể đổi mật khẩu. Vui lòng kiểm tra OTP')
+  } finally {
+    forgotLoading.value = false
   }
 }
 </script>
@@ -114,7 +220,9 @@ const login = async () => {
             <i class="bi bi-arrow-left-right"></i>
           </button>
 
-          <!-- <button class="forgot-btn" type="button">Quên mật khẩu?</button> -->
+          <button class="forgot-btn" type="button" @click="openForgotPassword">
+            Quên mật khẩu?
+          </button>
 
             <p class="login-note">
               Chỉ dành cho quản trị viên của đội ngũ phát triển ứng dụng Kiến thức lái xe 600
@@ -123,6 +231,94 @@ const login = async () => {
         </form>
       </div>
     </section>
+
+    <div v-if="showForgotModal" class="forgot-overlay" @click.self="closeForgotPassword">
+      <section class="forgot-modal" aria-modal="true" role="dialog">
+        <button class="modal-close" type="button" aria-label="Đóng" @click="closeForgotPassword">
+          <i class="bi bi-x-lg"></i>
+        </button>
+
+        <div class="forgot-modal-icon">
+          <i class="bi bi-envelope-check"></i>
+        </div>
+
+        <h3>Quên mật khẩu admin</h3>
+        <p v-if="forgotStep === 'email'">
+          Nhập Gmail admin để nhận mã OTP xác minh.
+        </p>
+        <p v-else>
+          Nhập OTP đã gửi đến Gmail và đặt mật khẩu mới.
+        </p>
+
+        <form v-if="forgotStep === 'email'" @submit.prevent="requestForgotOtp">
+          <label>Gmail admin</label>
+          <div class="input-box">
+            <i class="bi bi-envelope-fill"></i>
+            <input v-model="forgotEmail" type="email" placeholder="abc@gmail.com" />
+          </div>
+
+          <p v-if="forgotError" class="error-message">{{ forgotError }}</p>
+          <p v-if="forgotMessage" class="success-message">{{ forgotMessage }}</p>
+
+          <button class="login-btn" type="submit" :disabled="forgotLoading">
+            {{ forgotLoading ? 'Đang gửi OTP...' : 'Gửi OTP' }}
+            <i class="bi bi-send"></i>
+          </button>
+        </form>
+
+        <form v-else @submit.prevent="confirmPasswordReset">
+          <label>Gmail admin</label>
+          <div class="input-box">
+            <i class="bi bi-envelope-fill"></i>
+            <input v-model="forgotEmail" type="email" placeholder="abc@gmail.com" />
+          </div>
+
+          <label>Mã OTP</label>
+          <div class="input-box">
+            <i class="bi bi-shield-lock-fill"></i>
+            <input v-model="forgotOtp" inputmode="numeric" maxlength="6" placeholder="Nhập OTP" />
+          </div>
+
+          <label>Mật khẩu mới</label>
+          <div class="input-box">
+            <i class="bi bi-lock-fill"></i>
+            <input
+              v-model="newPassword"
+              :type="showNewPassword ? 'text' : 'password'"
+              placeholder="Ít nhất 6 ký tự"
+            />
+            <button type="button" @click="showNewPassword = !showNewPassword">
+              <i :class="showNewPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+            </button>
+          </div>
+
+          <label>Xác nhận mật khẩu</label>
+          <div class="input-box">
+            <i class="bi bi-lock-fill"></i>
+            <input
+              v-model="confirmPassword"
+              :type="showConfirmPassword ? 'text' : 'password'"
+              placeholder="Nhập lại mật khẩu mới"
+            />
+            <button type="button" @click="showConfirmPassword = !showConfirmPassword">
+              <i :class="showConfirmPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+            </button>
+          </div>
+
+          <p v-if="forgotError" class="error-message">{{ forgotError }}</p>
+          <p v-if="forgotMessage" class="success-message">{{ forgotMessage }}</p>
+
+          <button class="login-btn" type="submit" :disabled="forgotLoading">
+            {{ forgotLoading ? 'Đang đổi mật khẩu...' : 'Đổi mật khẩu' }}
+            <i class="bi bi-check2-circle"></i>
+          </button>
+
+          <button class="forgot-btn" type="button" :disabled="forgotLoading" @click="requestForgotOtp">
+            Gửi lại OTP
+          </button>
+        </form>
+      </section>
+    </div>
   </main>
 </template>
 
@@ -298,6 +494,10 @@ label {
   font-size: 13px;
 }
 
+.forgot-btn:disabled {
+  opacity: 0.65;
+}
+
 .login-note {
   margin-top: 6px;
   padding: 11px;
@@ -312,6 +512,74 @@ label {
   margin: 4px 0 0;
   color: #fca5a5;
   font-weight: 600;
+}
+
+.success-message {
+  margin: 4px 0 0;
+  color: #86efac;
+  font-weight: 700;
+}
+
+.forgot-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(2, 6, 23, 0.76);
+  backdrop-filter: blur(10px);
+}
+
+.forgot-modal {
+  position: relative;
+  width: min(420px, 100%);
+  max-height: calc(100vh - 36px);
+  overflow-y: auto;
+  padding: 28px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 18px;
+  background: #111827;
+  color: #f8fafc;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+}
+
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: #1a2438;
+  color: #cbd5e1;
+}
+
+.forgot-modal-icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 16px;
+  border-radius: 14px;
+  background: #0b1223;
+  color: #60a5fa;
+  font-size: 24px;
+}
+
+.forgot-modal h3 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.forgot-modal > p {
+  margin: 0 0 16px;
+  color: #9fb0c7;
+  font-size: 13px;
 }
 
 @media (max-width: 900px) {
