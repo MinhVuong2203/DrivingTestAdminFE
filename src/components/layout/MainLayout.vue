@@ -27,8 +27,6 @@ const sidebarStore = useSidebarStore()
         <main class="page-main">
           <slot />
         </main>
-
-        <Footer />
       </div>
     </div>
   </div>
