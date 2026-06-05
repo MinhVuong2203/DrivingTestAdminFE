@@ -13,6 +13,8 @@ const showPassword = ref(false)
 const loading = ref(false)
 const errorMessage = ref('')
 
+const isActiveAccount = (status) => (status || 'active').toLowerCase() === 'active'
+
 const login = async () => {
   errorMessage.value = ''
 
@@ -41,6 +43,12 @@ const login = async () => {
     if (userData.role?.toLowerCase() !== 'admin') {
       await signOut(auth)
       errorMessage.value = 'Tài khoản này không có quyền quản trị'
+      return
+    }
+
+    if (!isActiveAccount(userData.status)) {
+      await signOut(auth)
+      errorMessage.value = 'Tài khoản quản trị đang bị khóa'
       return
     }
 
