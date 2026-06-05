@@ -3,37 +3,28 @@ import '@/assets/css/public-pages.css'
 
 const members = [
   {
-    name: 'Nguyễn Minh An',
-    initials: 'NA',
+    name: 'Nguyễn Minh Vương',
     role: 'Trưởng nhóm',
-    description: 'Phụ trách kiến trúc hệ thống, luồng thanh toán VIP và điều phối phát triển.',
-    email: 'nguyenminhan@drivingtest.app',
-    phone: '+84 901 234 101',
+    email: 'vuonghihihihi@gmail.com',
+    phone: '+84 818 214 849',
   },
   {
-    name: 'Trần Gia Bảo',
-    initials: 'TB',
-    role: 'Backend Developer',
-    description: 'Xây dựng API, xử lý dữ liệu người dùng, gói VIP, diễn đàn và tích hợp PayOS.',
-    email: 'trangiabao@drivingtest.app',
-    phone: '+84 901 234 102',
+    name: 'Nguyễn Văn Hưng',
+    role: 'Thành viên',
+    email: 'vanhungvn741@gmail.com',
+    phone: '+84 797 579 550',
   },
   {
-    name: 'Lê Hoàng My',
-    initials: 'LM',
-    role: 'Mobile Developer',
-    description:
-      'Phát triển ứng dụng Flutter, luyện thi, nhận diện biển báo và trải nghiệm người học.',
-    email: 'lehoangmy@drivingtest.app',
-    phone: '+84 901 234 103',
+    name: 'Nguyễn Lê Hoàng Minh',
+    role: 'Thành viên',
+    email: 'oopsmask7@gmail.com',
+    phone: '+84 338 914 938',
   },
   {
-    name: 'Phạm Quốc Huy',
-    initials: 'PH',
-    role: 'Frontend Developer',
-    description: 'Thiết kế giao diện quản trị, dashboard, quản lý người dùng và trang công khai.',
-    email: 'phamquochuy@drivingtest.app',
-    phone: '+84 901 234 104',
+    name: 'Nguyễn Bình Minh',
+    role: 'Thành viên',
+    email: 'minhnguyen14536@gmail.com',
+    phone: '+84 393 098 766',
   },
 ]
 </script>
@@ -62,18 +53,15 @@ const members = [
       <h1 class="public-title">Đội ngũ phát triển</h1>
 
       <p class="public-lead">
-        Chúng tôi xây dựng Driving Test với mục tiêu giúp người học ôn luyện giấy phép lái xe thuận
+        Chúng tôi xây dựng Kiến thức lái xe 600 với mục tiêu giúp người học ôn luyện giấy phép lái xe thuận
         tiện hơn, theo dõi tiến độ rõ ràng hơn và sử dụng nội dung học tập an toàn.
       </p>
 
       <div class="team-grid mt-4">
         <article v-for="member in members" :key="member.email" class="member-card">
-          <div class="member-avatar">{{ member.initials }}</div>
-
           <div class="member-body">
             <h2>{{ member.name }}</h2>
             <span class="member-role">{{ member.role }}</span>
-            <p>{{ member.description }}</p>
 
             <div class="contact-list">
               <a :href="`mailto:${member.email}`">
