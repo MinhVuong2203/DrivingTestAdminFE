@@ -6,6 +6,7 @@ import HomeView from '../views/HomeView.vue'
 import UsersView from '@/views/user/UsersView.vue'
 import VipManagementView from '@/views/vip/VipManagementView.vue'
 import ForumManagerView from '@/views/forum_manager/ForumManagerView.vue'
+import FeedbackManagementView from '@/views/feedback/FeedbackManagementView.vue'
 import DownloadAppView from '@/views/public_page/DownloadAppView.vue'
 import DevelopmentTeamView from '@/views/public_page/DevelopmentTeamView.vue'
 import StatisticsView from '@/views/statistics/StatisticsView.vue'
@@ -77,6 +78,11 @@ const router = createRouter({
       path: '/download-app',
       component: DownloadAppView,
       meta: { public: true },
+    },
+    {
+      path: '/feedback',
+      component: FeedbackManagementView,
+      meta: { title: 'Phản hồi' },
     },
     {
       path: '/api/payment/payos-return',

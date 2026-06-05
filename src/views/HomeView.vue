@@ -50,6 +50,13 @@ const managementLinks = [
     to: '/forum-manager',
     label: 'Quản lý diễn đàn',
   },
+  {
+    title: 'Phản hồi',
+    text: 'Đọc góp ý từ người dùng, theo dõi trạng thái xử lý và lưu câu trả lời trên hệ thống.',
+    icon: 'bi-reply-all',
+    to: '/feedback',
+    label: 'Mở phản hồi',
+  },
 ]
 
 const adminNotes = [
@@ -68,15 +75,19 @@ const adminNotes = [
           <span class="overview-eyebrow">Drive Prep Manager</span>
           <h1>Tổng quan quản trị ứng dụng học lái xe</h1>
           <p>
-            Đây là khu vực điều phối cho hệ thống ôn thi GPLX. Admin có thể đi nhanh tới thống kê,
-            người dùng, gói VIP và diễn đàn mà không cần xem lại số liệu ở trang này.
+            Đây là khu vực điều phối cho hệ thống ôn thi GPLX. Admin có thể đi nhanh tới
+            thống kê, người dùng, gói VIP, diễn đàn và phản hồi mà không cần xem lại số
+            liệu ở trang này.
           </p>
         </div>
 
         <div class="hero-panel">
           <span>Vai trò trang này</span>
           <strong>Cổng giới thiệu và điều hướng</strong>
-          <p>Trang Thống kê là nơi xem số liệu chi tiết. Trang Tổng quan chỉ tóm tắt chức năng và dẫn tới khu vực cần quản lý.</p>
+          <p>
+            Trang Thống kê là nơi xem số liệu chi tiết. Trang Tổng quan chỉ tóm tắt chức
+            năng và dẫn tới khu vực cần quản lý.
+          </p>
         </div>
       </header>
 
@@ -87,7 +98,11 @@ const adminNotes = [
         </div>
 
         <div class="highlight-grid">
-          <article v-for="item in appHighlights" :key="item.title" class="highlight-card">
+          <article
+            v-for="item in appHighlights"
+            :key="item.title"
+            class="highlight-card"
+          >
             <i class="bi" :class="item.icon"></i>
             <h3>{{ item.title }}</h3>
             <p>{{ item.text }}</p>
@@ -102,7 +117,12 @@ const adminNotes = [
         </div>
 
         <div class="management-grid">
-          <router-link v-for="item in managementLinks" :key="item.to" :to="item.to" class="management-card">
+          <router-link
+            v-for="item in managementLinks"
+            :key="item.to"
+            :to="item.to"
+            class="management-card"
+          >
             <div class="management-icon">
               <i class="bi" :class="item.icon"></i>
             </div>

@@ -1,13 +1,11 @@
 <script setup>
 import { useSidebarStore } from '@/stores/sidebarStore'
-import { onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { watch } from 'vue'
 
 const sidebarStore = useSidebarStore()
 const route = useRoute()
 
-// Trigger icon khi hover
 onMounted(() => {
   document.querySelectorAll('.nav-item').forEach((item) => {
     item.addEventListener('mouseenter', () => {
@@ -19,24 +17,20 @@ onMounted(() => {
   })
 })
 
-// Loop icon khi active, dừng khi không active
 watch(
   () => route.path,
   () => {
     setTimeout(() => {
-      // Dừng tất cả icons
       document.querySelectorAll('.nav-item lord-icon').forEach((icon) => {
         if (icon?.playerInstance) {
           icon.playerInstance.pause()
         }
       })
 
-      // Loop icon của item đang active
       const activeItem = document.querySelector('.nav-item.active')
       if (activeItem) {
         const icon = activeItem.querySelector('lord-icon')
         if (icon?.playerInstance) {
-          // Set trigger thành loop
           icon.setAttribute('trigger', 'loop')
           icon.playerInstance.playFromBeginning()
         }
@@ -49,7 +43,6 @@ watch(
 
 <template>
   <aside class="sidebar">
-    <!-- BRAND -->
     <div class="sidebar-brand">
       <div class="brand-logo">
         <i class="bi bi-shield-check"></i>
@@ -61,9 +54,7 @@ watch(
       </div>
     </div>
 
-    <!-- NAV -->
     <nav class="sidebar-nav">
-      <!-- DASHBOARD -->
       <router-link to="/" class="nav-item" active-class="active">
         <lord-icon
           src="https://cdn.lordicon.com/rpvomrgr.json"
@@ -73,11 +64,10 @@ watch(
           colors="primary:#242424,secondary:#e83a30"
           class="nav-icon"
         >
-        </lord-icon> 
+        </lord-icon>
         <span class="nav-label"> TỔNG QUAN </span>
       </router-link>
 
-      <!-- STATISTICS -->
       <router-link to="/statistics" class="nav-item" active-class="active">
         <lord-icon
           src="https://cdn.lordicon.com/abwrkdvl.json"
@@ -91,7 +81,6 @@ watch(
         <span class="nav-label"> THỐNG KÊ </span>
       </router-link>
 
-      <!-- USERS -->
       <router-link to="/users" class="nav-item" active-class="active">
         <lord-icon
           src="https://cdn.lordicon.com/rzsnbiaw.json"
@@ -106,7 +95,6 @@ watch(
         <span class="nav-label"> NGƯỜI DÙNG </span>
       </router-link>
 
-      <!-- VIP -->
       <router-link to="/vip-management" class="nav-item" active-class="active">
         <lord-icon
           src="https://cdn.lordicon.com/zldpstex.json"
@@ -120,17 +108,7 @@ watch(
         <span class="nav-label"> GÓI VIP </span>
       </router-link>
 
-      <!-- FORUM -->
       <router-link to="/forum-manager" class="nav-item" active-class="active">
-        <!-- <lord-icon
-          src="https://cdn.lordicon.com/zldpstex.json"
-          trigger="hover"
-          delay="100"
-          stroke="bold"
-          colors="primary:#242424,secondary:#e83a30"
-          class="nav-icon"
-        >
-        </lord-icon> -->
         <lord-icon
           src="https://cdn.lordicon.com/aksvbzmu.json"
           trigger="hover"
@@ -138,9 +116,22 @@ watch(
           stroke="bold"
           colors="primary:#242424,secondary:#e83a30"
           class="nav-icon"
-          >
+        >
         </lord-icon>
         <span class="nav-label"> DIỄN ĐÀN </span>
+      </router-link>
+
+      <router-link to="/feedback" class="nav-item" active-class="active">
+        <lord-icon
+          src="https://cdn.lordicon.com/ayhtotha.json"
+          trigger="hover"
+          delay="100"
+          stroke="bold"
+          colors="primary:#242424,secondary:#e83a30"
+          class="nav-icon"
+        >
+        </lord-icon>
+        <span class="nav-label"> PHẢN HỒI </span>
       </router-link>
     </nav>
   </aside>
