@@ -96,11 +96,6 @@ const buildQueryParams = (cursor = currentCursor.value) => ({
   sortDirection: sortAsc.value ? 'asc' : 'desc',
 })
 
-const isRootAdminUser = (user) =>
-  user.isImportant === true ||
-  (currentAdmin.value?.isImportant === true &&
-    (user.uid === currentAdmin.value.uid || user.email === currentAdmin.value.email))
-
 const loadUsers = async (cursor = currentCursor.value) => {
   loadingStore.show()
 
@@ -112,7 +107,7 @@ const loadUsers = async (cursor = currentCursor.value) => {
         (user.uid === currentAdmin.value.uid || user.email === currentAdmin.value.email)
 
       return isCurrentRootAdmin ? { ...user, isImportant: true } : user
-    }).filter((user) => !isRootAdminUser(user))
+    })
     nextCursor.value = result.nextCursor || null
     hasNextPage.value = result.hasNextPage === true
   } catch (err) {
