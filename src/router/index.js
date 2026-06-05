@@ -26,9 +26,15 @@ const getCurrentUser = () => {
   })
 }
 
-const isAdmin = async (uid) => {
+const canAccessAdmin = async (uid) => {
   const userSnap = await getDoc(doc(db, 'users', uid))
-  return userSnap.exists() && userSnap.data().role?.toLowerCase() === 'admin'
+  if (!userSnap.exists()) return false
+
+  const userData = userSnap.data()
+  const isAdmin = userData.role?.toLowerCase() === 'admin'
+  const isActive = (userData.status || 'active').toLowerCase() === 'active'
+
+  return isAdmin && isActive
 }
 
 const router = createRouter({
@@ -109,14 +115,14 @@ router.beforeEach(async (to) => {
   const user = await getCurrentUser()
 
   if (to.meta.public) {
-    if (to.name === 'login' && user && (await isAdmin(user.uid))) return '/'
+    if (to.name === 'login' && user && (await canAccessAdmin(user.uid))) return '/'
     return true
   }
 
   if (!user) return '/login'
 
-  const admin = await isAdmin(user.uid)
-  if (!admin) {
+  const canAccess = await canAccessAdmin(user.uid)
+  if (!canAccess) {
     await signOut(auth)
     return '/login'
   }
