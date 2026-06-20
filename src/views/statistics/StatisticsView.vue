@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 
 import MainLayout from '@/components/layout/MainLayout.vue'
-import { getAdminStatistics } from '@/services/statisticsService'
+import { getAdminStatistics, getAdMobReport } from '@/services/statisticsService'
 import { useLoadingStore } from '@/stores/loadingStore'
 import { useToastStore } from '@/stores/toastStore'
 
@@ -11,16 +11,17 @@ import '@/assets/css/statistics/statistics.css'
 const loadingStore = useLoadingStore()
 const toastStore = useToastStore()
 
-const selectedRange = ref('30d')
+const selectedRange = ref('month')
 const customFromDate = ref('')
 const customToDate = ref('')
 const expandedRow = ref('users')
 const statistics = ref(null)
+const adMobReport = ref([])
 
 const rangeOptions = [
-  { value: '7d', label: '7 ngày' },
-  { value: '30d', label: '30 ngày' },
-  { value: '90d', label: '90 ngày' },
+  { value: 'month', label: 'Tháng' },
+  { value: 'quarter', label: 'Quý' },
+  { value: 'year', label: 'Năm' },
 ]
 
 const overview = computed(() => statistics.value?.overview || {})
@@ -28,6 +29,11 @@ const charts = computed(() => statistics.value?.charts || {})
 const details = computed(() => statistics.value?.details || {})
 
 const formatNumber = (value = 0) => new Intl.NumberFormat('vi-VN').format(value || 0)
+
+const formatPercent = (value = 0) =>
+  new Intl.NumberFormat('vi-VN', {
+    maximumFractionDigits: 1,
+  }).format(value || 0)
 
 const formatDateTime = (value) => {
   if (!value) return '-'
@@ -42,12 +48,49 @@ const formatCurrency = (value = 0) =>
     maximumFractionDigits: 0,
   }).format(value || 0)
 
+const formatInputDate = (date) => {
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+  return localDate.toISOString().slice(0, 10)
+}
+
+const getSelectedPeriod = () => {
+  if (selectedRange.value === 'custom') {
+    return {
+      startDate: customFromDate.value,
+      endDate: customToDate.value,
+    }
+  }
+
+  const end = new Date()
+  const start = new Date(end)
+
+  if (selectedRange.value === 'year') {
+    start.setMonth(0, 1)
+  } else if (selectedRange.value === 'quarter') {
+    const quarterStartMonth = Math.floor(end.getMonth() / 3) * 3
+    start.setMonth(quarterStartMonth, 1)
+  } else {
+    start.setDate(1)
+  }
+
+  return {
+    startDate: formatInputDate(start),
+    endDate: formatInputDate(end),
+  }
+}
+
+const getAdMobRevenueVnd = (row = {}) =>
+  Number(row.estimatedEarningsVnd ?? Number(row.estimatedEarnings || 0) * Number(row.usdToVndRate || 26330))
+
+const getAdMobEcpmVnd = (row = {}) =>
+  Number(row.ecpmVnd ?? Number(row.ecpm || 0) * Number(row.usdToVndRate || 26330))
+
 const displayRange = computed(() => {
   if (selectedRange.value === 'custom' && customFromDate.value && customToDate.value) {
     return `${customFromDate.value} đến ${customToDate.value}`
   }
 
-  return rangeOptions.find((option) => option.value === selectedRange.value)?.label || '30 ngày'
+  return rangeOptions.find((option) => option.value === selectedRange.value)?.label || 'Tháng'
 })
 
 const getPeakPoint = (points = []) => {
@@ -132,6 +175,53 @@ const totalRangeActivity = computed(() =>
   summaryRows.value.reduce((total, row) => total + Number(row.recent || 0), 0),
 )
 
+const adMobTotals = computed(() => {
+  const rows = adMobReport.value || []
+  const totalEarnings = rows.reduce((sum, row) => sum + Number(row.estimatedEarnings || 0), 0)
+  const totalEarningsVnd = rows.reduce((sum, row) => sum + getAdMobRevenueVnd(row), 0)
+  const totalImpressions = rows.reduce((sum, row) => sum + Number(row.impressions || 0), 0)
+  const totalClicks = rows.reduce((sum, row) => sum + Number(row.clicks || 0), 0)
+  const avgEcpmVnd = rows.length
+    ? rows.reduce((sum, row) => sum + getAdMobEcpmVnd(row), 0) / rows.length
+    : 0
+
+  return {
+    totalEarnings,
+    totalEarningsVnd,
+    totalImpressions,
+    totalClicks,
+    avgEcpmVnd,
+    usdToVndRate: rows[0]?.usdToVndRate || 26330,
+  }
+})
+
+const vipRevenueInRange = computed(() => Number(overview.value.newVipRevenue || 0))
+const totalRevenueInRange = computed(() => vipRevenueInRange.value + adMobTotals.value.totalEarningsVnd)
+
+const revenueShares = computed(() => {
+  const total = totalRevenueInRange.value
+  const admobPercent = total ? (adMobTotals.value.totalEarningsVnd / total) * 100 : 0
+  const vipPercent = total ? (vipRevenueInRange.value / total) * 100 : 0
+
+  return {
+    admobPercent,
+    vipPercent,
+    admobAngle: (admobPercent / 100) * 360,
+  }
+})
+
+const revenueDonutStyle = computed(() => {
+  if (!totalRevenueInRange.value) {
+    return {
+      background: 'conic-gradient(#e5e7eb 0deg 360deg)',
+    }
+  }
+
+  return {
+    background: `conic-gradient(#2563eb 0deg ${revenueShares.value.admobAngle}deg, #10b981 ${revenueShares.value.admobAngle}deg 360deg)`,
+  }
+})
+
 const maxPointCount = (points = []) => Math.max(1, ...points.map((point) => Number(point.count || 0)))
 
 const buildPolyline = (points = []) => {
@@ -202,12 +292,13 @@ const loadStatistics = async () => {
   try {
     loadingStore.show()
 
-    const params =
-      selectedRange.value === 'custom'
-        ? { from: customFromDate.value, to: customToDate.value }
-        : { range: selectedRange.value }
+    const period = getSelectedPeriod()
+    const params = { from: period.startDate, to: period.endDate }
 
-    statistics.value = await getAdminStatistics(params)
+    const [statisticsData, adMobData] = await Promise.all([getAdminStatistics(params), getAdMobReport(period)])
+
+    statistics.value = statisticsData
+    adMobReport.value = adMobData
   } catch {
     toastStore.error('Không tải được dữ liệu thống kê')
   } finally {
@@ -223,7 +314,6 @@ onMounted(loadStatistics)
     <section class="statistics-workspace">
       <header class="statistics-topbar">
         <div class="statistics-heading">
-          <span class="eyebrow">Admin analytics</span>
           <h1>Thống kê hệ thống</h1>
           <p>Theo dõi dữ liệu vận hành trong khoảng {{ displayRange }}.</p>
         </div>
@@ -272,6 +362,70 @@ onMounted(loadStatistics)
           <strong>{{ formatCurrency(overview.totalVipRevenue) }}</strong>
         </div>
       </div>
+
+      <section class="revenue-board">
+        <article class="revenue-donut-panel">
+          <div class="revenue-panel-head">
+            <div>
+              <h2>Cơ cấu doanh thu kỳ này</h2>
+            </div>
+            <strong>{{ formatCurrency(totalRevenueInRange) }}</strong>
+          </div>
+
+          <div class="revenue-donut-content">
+            <div class="revenue-donut" :style="revenueDonutStyle" aria-label="Cơ cấu doanh thu AdMob và VIP">
+              <div>
+                <span>Tổng doanh thu</span>
+                <strong>{{ formatCurrency(totalRevenueInRange) }}</strong>
+              </div>
+            </div>
+
+            <div class="revenue-legend">
+              <div>
+                <i class="legend-dot admob" aria-hidden="true"></i>
+                <span>AdMob</span>
+                <strong>{{ formatCurrency(adMobTotals.totalEarningsVnd) }}</strong>
+                <small>{{ formatPercent(revenueShares.admobPercent) }}%</small>
+              </div>
+              <div>
+                <i class="legend-dot vip" aria-hidden="true"></i>
+                <span>Nạp VIP</span>
+                <strong>{{ formatCurrency(vipRevenueInRange) }}</strong>
+                <small>{{ formatPercent(revenueShares.vipPercent) }}%</small>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="admob-metrics-panel">
+          <div class="metric-panel-head">
+            <div>
+              <h2>Báo cáo AdMob</h2>
+              <span>Tỷ giá áp dụng: 1 USD = {{ formatNumber(adMobTotals.usdToVndRate) }} đ</span>
+            </div>
+            <strong>{{ formatCurrency(adMobTotals.totalEarningsVnd) }}</strong>
+          </div>
+
+          <div class="metric-kpis">
+            <div>
+              <span>Doanh thu gốc</span>
+              <strong>${{ formatNumber(adMobTotals.totalEarnings.toFixed(2)) }}</strong>
+            </div>
+            <div>
+              <span>Lượt hiển thị</span>
+              <strong>{{ formatNumber(adMobTotals.totalImpressions) }}</strong>
+            </div>
+            <div>
+              <span>Clicks</span>
+              <strong>{{ formatNumber(adMobTotals.totalClicks) }}</strong>
+            </div>
+            <div>
+              <span>eCPM quy đổi</span>
+              <strong>{{ formatCurrency(adMobTotals.avgEcpmVnd) }}</strong>
+            </div>
+          </div>
+        </article>
+      </section>
 
       <div class="summary-table">
         <div class="summary-head">
