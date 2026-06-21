@@ -6,8 +6,8 @@ import '@/assets/css/public-pages.css'
   <main class="public-page">
     <nav class="public-nav" aria-label="Điều hướng công khai">
       <router-link class="public-brand" to="/download-app">
-        <span class="public-brand-icon"><i class="bi bi-car-front-fill"></i></span>
-        Driving Test
+         <img src="@/assets/image/avatar.png" alt="Logo" class="logo-image"/>
+        Kiến thức lái xe 600
       </router-link>
 
       <div class="public-links">
@@ -26,7 +26,7 @@ import '@/assets/css/public-pages.css'
       <h1 class="public-title">Chính sách riêng tư</h1>
 
       <p class="public-lead">
-        Chính sách này mô tả cách Driving Test thu thập, sử dụng và bảo vệ thông tin trong quá trình
+        Chính sách này mô tả cách Driving Kiến thức lái xe 600 thu thập, sử dụng và bảo vệ thông tin trong quá trình
         bạn dùng ứng dụng luyện thi giấy phép lái xe.
       </p>
 
@@ -59,7 +59,7 @@ import '@/assets/css/public-pages.css'
         <section class="policy-section">
           <h2>4. Chia sẻ thông tin</h2>
           <p>
-            Driving Test không bán thông tin cá nhân của người dùng. Một số dữ liệu có thể được chia
+            Kiến thức lái xe 600 không bán thông tin cá nhân của người dùng. Một số dữ liệu có thể được chia
             sẻ với nhà cung cấp dịch vụ thanh toán, xác thực hoặc hạ tầng khi cần thiết để vận hành
             ứng dụng.
           </p>

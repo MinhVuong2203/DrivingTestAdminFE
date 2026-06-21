@@ -6,8 +6,8 @@ import '@/assets/css/public-pages.css'
   <main class="public-page">
     <nav class="public-nav" aria-label="Điều hướng công khai">
       <router-link class="public-brand" to="/download-app">
-        <span class="public-brand-icon"><i class="bi bi-car-front-fill"></i></span>
-        Driving Test
+         <img src="@/assets/image/avatar.png" alt="Logo" class="logo-image"/>
+        Kiến thức lái xe 600
       </router-link>
 
       <div class="public-links">
@@ -26,7 +26,7 @@ import '@/assets/css/public-pages.css'
       <h1 class="public-title">Điều khoản sử dụng</h1>
 
       <p class="public-lead">
-        Khi truy cập hoặc sử dụng Driving Test, bạn đồng ý tuân thủ các điều khoản dưới đây. Nội
+        Khi truy cập hoặc sử dụng Kiến thức lái xe 600, bạn đồng ý tuân thủ các điều khoản dưới đây. Nội
         dung này giúp bảo vệ người dùng, dữ liệu học tập và chất lượng dịch vụ.
       </p>
 
@@ -34,7 +34,7 @@ import '@/assets/css/public-pages.css'
         <section class="policy-section">
           <h2>1. Phạm vi sử dụng</h2>
           <p>
-            Driving Test cung cấp công cụ ôn luyện, thi thử, tra cứu biển báo, quản lý tiến độ học
+            Kiến thức lái xe 600 cung cấp công cụ ôn luyện, thi thử, tra cứu biển báo, quản lý tiến độ học
             tập và một số tính năng hỗ trợ khác. Ứng dụng không thay thế tư vấn pháp lý hoặc tài
             liệu chính thức từ cơ quan có thẩm quyền.
           </p>

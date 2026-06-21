@@ -44,9 +44,8 @@ watch(
 <template>
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <div class="brand-logo">
-        <i class="bi bi-shield-check"></i>
-      </div>
+     
+        <img src="@/assets/image/avatar.png" alt="Logo" class="logo-image"/>
 
       <div class="brand-text">
         Manager
@@ -123,7 +122,7 @@ watch(
 
       <router-link to="/feedback" class="nav-item" active-class="active">
         <lord-icon
-          src="https://cdn.lordicon.com/ayhtotha.json"
+          src="https://cdn.lordicon.com/opimjjrb.json"
           trigger="hover"
           delay="100"
           stroke="bold"

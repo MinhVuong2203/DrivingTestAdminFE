@@ -502,20 +502,12 @@ body {
   white-space: nowrap;
 }
 
-.brand-logo {
-  width: 32px;
-  height: 32px;
+.logo-image{
+  width: 42px;
+  height: 42px;
   flex-shrink: 0;
   background: var(--accent);
   border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.brand-logo svg {
-  width: 18px;
-  height: 18px;
 }
 
 .brand-text {

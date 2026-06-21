@@ -110,7 +110,7 @@ onMounted(loadAdminProfile)
         <div v-else class="user-avatar">{{ getInitial(displayName) }}</div>
 
         <div class="user-info">
-          <<<<<<< HEAD
+
           <span class="user-name">{{ displayName }}</span>
           <span class="user-role">{{ roleLabel }}</span>
         </div>
@@ -129,17 +129,7 @@ onMounted(loadAdminProfile)
             <i class="bi bi-box-arrow-right"></i>
             <span>Đăng xuất</span>
           </button>
-          =======
-          <span class="user-name">Admin</span>
-          <span class="user-role">Quan tri vien</span>
-        </div>
-
-        <div v-if="showDropdown" class="user-dropdown">
-          <a class="dropdown-item" href="#">Ho so</a>
-          <a class="dropdown-item" href="#">Cai dat</a>
-          <div class="dropdown-divider"></div>
-          <button class="dropdown-item logout" type="button" @click.stop="logout">Dang xuat</button>
-          >>>>>>> 2af75a1 (add dashboard for frontend)
+        
         </div>
       </div>
     </div>

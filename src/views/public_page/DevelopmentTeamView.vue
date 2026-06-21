@@ -33,8 +33,10 @@ const members = [
   <main class="public-page">
     <nav class="public-nav" aria-label="Điều hướng công khai">
       <router-link class="public-brand" to="/download-app">
-        <span class="public-brand-icon"><i class="bi bi-car-front-fill"></i></span>
-        Driving Test
+         
+          <img src="@/assets/image/avatar.png" alt="Logo" class="logo-image"/>
+      
+        Kiến thức lái xe 600
       </router-link>
 
       <div class="public-links">

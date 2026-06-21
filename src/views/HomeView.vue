@@ -72,7 +72,7 @@ const adminNotes = [
     <section class="overview-page">
       <header class="overview-hero">
         <div class="hero-copy">
-          <span class="overview-eyebrow">Drive Prep Manager</span>
+          <span class="overview-eyebrow">Quản trị</span>
           <h1>Tổng quan quản trị ứng dụng học lái xe</h1>
           <p>
             Đây là khu vực điều phối cho hệ thống ôn thi GPLX. Admin có thể đi nhanh tới
