@@ -1,0 +1,10 @@
+{
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "apkUrl": "https://drivingtestadminfe-production.up.railway.app/downloads/app-release.apk",
+  "apkSizeBytes": 32773848,
+  "forceUpdate": false,
+  "releaseNotes": [
+    "Phiên bản hiện tại."
+  ]
+}
