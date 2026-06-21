@@ -115,6 +115,13 @@ function isValidImage(url) {
   return url.startsWith('http://') || url.startsWith('https://')
 }
 
+function isValidVideo(url) {
+  if (!url) return false
+  if (url === 'string') return false
+
+  return url.startsWith('http://') || url.startsWith('https://')
+}
+
 const openComments = async (post) => {
   selectedPost.value = post
   showCommentModal.value = true
@@ -446,6 +453,17 @@ onMounted(() => {
               alt="post image"
             />
 
+            <video
+              v-if="isValidVideo(post.videoUrl)"
+              class="post-video"
+              :src="post.videoUrl"
+              controls
+              preload="metadata"
+              playsinline
+            >
+              Trình duyệt không hỗ trợ phát video.
+            </video>
+
             <div v-if="post.address" class="address">
               📍 {{ post.address }}
             </div>
@@ -663,6 +681,17 @@ onMounted(() => {
           :src="selectedPost.imageUrl"
           alt="post image"
         />
+
+        <video
+          v-if="isValidVideo(selectedPost?.videoUrl)"
+          class="fb-post-video"
+          :src="selectedPost.videoUrl"
+          controls
+          preload="metadata"
+          playsinline
+        >
+          Trình duyệt không hỗ trợ phát video.
+        </video>
 
         <div class="fb-post-stats">
           <span>❤️ {{ selectedPost?.likeCount || 0 }}</span>

@@ -6,6 +6,26 @@
 @import './forum-comment-modal.css';
 @import './forum-moderation.css';
 
+.post-video {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  margin-top: 14px;
+  border-radius: 14px;
+  background: #000;
+  object-fit: contain;
+}
+
+.fb-post-video {
+  display: block;
+  width: 100%;
+  max-height: 520px;
+  margin-top: 14px;
+  border-radius: 12px;
+  background: #000;
+  object-fit: contain;
+}
+
 /* :root {
   --forum-bg: #f4f7fb;
   --forum-card: #ffffff;
