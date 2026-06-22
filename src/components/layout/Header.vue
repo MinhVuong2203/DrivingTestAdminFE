@@ -136,7 +136,12 @@ onMounted(loadAdminProfile)
   </header>
 
   <Teleport to="body">
-    <div v-if="showProfileModal" class="profile-modal-backdrop" @click="closeProfile">
+    <div
+      v-if="showProfileModal"
+      class="profile-modal-backdrop"
+      :data-theme="themeStore.isDark ? 'dark' : 'light'"
+      @click="closeProfile"
+    >
       <section class="profile-modal" @click.stop>
         <button class="profile-modal-close" type="button" @click="closeProfile">
           <i class="bi bi-x-lg"></i>
