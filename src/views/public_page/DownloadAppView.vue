@@ -10,7 +10,7 @@ import '@/assets/css/download-app.css'
 const appNameDisplay = 'Kiến thức lái xe 600'
 const apkFileName = 'app-release.apk'
 const apkUrl = `${import.meta.env.BASE_URL}downloads/${apkFileName}`
-const fallbackApkSizeBytes = 32971016
+const fallbackApkSizeBytes = 34290684
 const apkSizeBytes = ref(fallbackApkSizeBytes)
 
 const screenshots = [

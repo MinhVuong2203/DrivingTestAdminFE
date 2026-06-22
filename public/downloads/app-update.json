@@ -1,12 +1,11 @@
 {
-  "versionName": "1.0.2",
-  "versionCode": 3,
+  "versionName": "1.0.3",
+  "versionCode": 4,
   "apkUrl": "https://drivingtestadminfe-production.up.railway.app/downloads/app-release.apk",
-  "apkSizeBytes": 32971016,
-  "forceUpdate": false,
+  "apkSizeBytes": 34290684,
+  "forceUpdate": true,
   "releaseNotes": [
     "Sửa lỗi hiệu năng",
-    "Cải thiện giao diện người dùng",
-    "Bổ sung tính năng Mô phỏng lái xe"
+    "Cải thiện giao diện người dùng"
   ]
 }
