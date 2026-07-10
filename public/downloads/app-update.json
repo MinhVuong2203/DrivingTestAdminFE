@@ -1,11 +1,11 @@
 {
-  "versionName": "1.0.3",
-  "versionCode": 4,
+  "versionName": "1.0.4",
+  "versionCode": 5,
   "apkUrl": "https://drivingtestadminfe-production.up.railway.app/downloads/app-release.apk",
   "apkSizeBytes": 34290684,
   "forceUpdate": true,
   "releaseNotes": [
     "Sửa lỗi hiệu năng",
-    "Cải thiện giao diện người dùng"
+    "Cải thiện chức năng đăng nhập"
   ]
 }

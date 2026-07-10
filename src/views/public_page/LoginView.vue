@@ -1,56 +1,81 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth'
-import { doc, getDoc } from 'firebase/firestore'
+import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth'
+import { collection, doc, getDoc, getDocs, limit, query, serverTimestamp, setDoc, where } from 'firebase/firestore'
 import { auth, db } from '@/services/firebase'
-import api from '@/services/api'
 
 const router = useRouter()
 
-const email = ref('')
-const password = ref('')
-const showPassword = ref(false)
 const loading = ref(false)
 const errorMessage = ref('')
-const showForgotModal = ref(false)
-const forgotStep = ref('email')
-const forgotEmail = ref('')
-const forgotOtp = ref('')
-const newPassword = ref('')
-const confirmPassword = ref('')
-const showNewPassword = ref(false)
-const showConfirmPassword = ref(false)
-const forgotLoading = ref(false)
-const forgotMessage = ref('')
-const forgotError = ref('')
 
 const isActiveAccount = (status) => (status || 'active').toLowerCase() === 'active'
+const normalizeGmail = (value) => value.trim().toLowerCase()
+const isValidGmail = (value) => /^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(normalizeGmail(value))
+
+const resolveAdminProfile = async (firebaseUser, loginGmail) => {
+  const userRef = doc(db, 'users', firebaseUser.uid)
+  const userSnap = await getDoc(userRef)
+
+  if (userSnap.exists()) {
+    return userSnap.data()
+  }
+
+  const emailQuery = query(collection(db, 'users'), where('email', '==', loginGmail), limit(1))
+  const emailSnap = await getDocs(emailQuery)
+  const oldAdminDoc = emailSnap.docs[0]
+
+  if (!oldAdminDoc?.exists()) {
+    return null
+  }
+
+  const oldData = oldAdminDoc.data()
+  if (oldData.role?.toLowerCase() !== 'admin' || !isActiveAccount(oldData.status)) {
+    return oldData
+  }
+
+  const oldProviders = Array.isArray(oldData.providers) ? oldData.providers : []
+  const migratedData = {
+    ...oldData,
+    uid: firebaseUser.uid,
+    email: loginGmail,
+    displayName: firebaseUser.displayName || oldData.displayName || loginGmail.split('@')[0],
+    photoURL: firebaseUser.photoURL || oldData.photoURL || '',
+    provider: 'google',
+    providers: Array.from(new Set([...oldProviders, 'google'])),
+    updatedAt: serverTimestamp(),
+  }
+
+  await setDoc(userRef, migratedData, { merge: true })
+  return migratedData
+}
 
 const login = async () => {
   errorMessage.value = ''
 
-  if (!email.value.trim() || !password.value) {
-    errorMessage.value = 'Vui lòng nhập đầy đủ tài khoản và mật khẩu'
-    return
-  }
-
   try {
     loading.value = true
 
-    const result = await signInWithEmailAndPassword(auth, email.value.trim(), password.value)
-    const uid = result.user.uid
+    const provider = new GoogleAuthProvider()
+    provider.setCustomParameters({ prompt: 'select_account' })
 
-    const userRef = doc(db, 'users', uid)
-    const userSnap = await getDoc(userRef)
+    const result = await signInWithPopup(auth, provider)
+    const loginGmail = normalizeGmail(result.user.email || '')
 
-    if (!userSnap.exists()) {
+    if (!isValidGmail(loginGmail)) {
+      await signOut(auth)
+      errorMessage.value = 'Vui lòng đăng nhập bằng tài khoản Gmail'
+      return
+    }
+
+    const userData = await resolveAdminProfile(result.user, loginGmail)
+
+    if (!userData) {
       await signOut(auth)
       errorMessage.value = 'Tài khoản không tồn tại trong hệ thống'
       return
     }
-
-    const userData = userSnap.data()
 
     if (userData.role?.toLowerCase() !== 'admin') {
       await signOut(auth)
@@ -67,103 +92,9 @@ const login = async () => {
     router.push('/')
   } catch (error) {
     console.error(error)
-    errorMessage.value = 'Sai tài khoản hoặc mật khẩu'
+    errorMessage.value = 'Đăng nhập Gmail thất bại'
   } finally {
     loading.value = false
-  }
-}
-
-const getApiMessage = (error, fallback) => {
-  const data = error.response?.data
-  if (typeof data === 'string') return data
-  return data?.message || fallback
-}
-
-const resetForgotForm = () => {
-  forgotStep.value = 'email'
-  forgotEmail.value = email.value.trim()
-  forgotOtp.value = ''
-  newPassword.value = ''
-  confirmPassword.value = ''
-  showNewPassword.value = false
-  showConfirmPassword.value = false
-  forgotMessage.value = ''
-  forgotError.value = ''
-}
-
-const openForgotPassword = () => {
-  resetForgotForm()
-  showForgotModal.value = true
-}
-
-const closeForgotPassword = () => {
-  showForgotModal.value = false
-  resetForgotForm()
-}
-
-const requestForgotOtp = async () => {
-  forgotMessage.value = ''
-  forgotError.value = ''
-
-  if (!forgotEmail.value.trim()) {
-    forgotError.value = 'Vui lòng nhập Gmail admin'
-    return
-  }
-
-  try {
-    forgotLoading.value = true
-    const res = await api.post('/api/admin/password-reset/request-otp', {
-      email: forgotEmail.value.trim(),
-    })
-    forgotStep.value = 'reset'
-    forgotMessage.value = res.data?.message || 'Nếu email hợp lệ, OTP đã được gửi đến Gmail của bạn'
-  } catch (error) {
-    console.error(error)
-    forgotError.value = getApiMessage(error, 'Không thể gửi OTP. Vui lòng thử lại sau')
-  } finally {
-    forgotLoading.value = false
-  }
-}
-
-const confirmPasswordReset = async () => {
-  forgotMessage.value = ''
-  forgotError.value = ''
-
-  if (!forgotEmail.value.trim() || !forgotOtp.value.trim() || !newPassword.value) {
-    forgotError.value = 'Vui lòng nhập đầy đủ email, OTP và mật khẩu mới'
-    return
-  }
-
-  if (newPassword.value.length < 6) {
-    forgotError.value = 'Mật khẩu mới phải có ít nhất 6 ký tự'
-    return
-  }
-
-  if (newPassword.value !== confirmPassword.value) {
-    forgotError.value = 'Mật khẩu xác nhận không khớp'
-    return
-  }
-
-  try {
-    forgotLoading.value = true
-    const res = await api.post('/api/admin/password-reset/confirm', {
-      email: forgotEmail.value.trim(),
-      otp: forgotOtp.value.trim(),
-      newPassword: newPassword.value,
-    })
-    email.value = forgotEmail.value.trim()
-    password.value = ''
-    forgotMessage.value = res.data?.message || 'Đổi mật khẩu thành công'
-
-    setTimeout(() => {
-      showForgotModal.value = false
-      resetForgotForm()
-    }, 900)
-  } catch (error) {
-    console.error(error)
-    forgotError.value = getApiMessage(error, 'Không thể đổi mật khẩu. Vui lòng kiểm tra OTP')
-  } finally {
-    forgotLoading.value = false
   }
 }
 </script>
@@ -191,37 +122,14 @@ const confirmPasswordReset = async () => {
         </div>
 
         <h2>Đăng nhập</h2>
-        <p>Nhập tài khoản được cấp để truy cập hệ thống.</p>
+        <p>Chọn tài khoản Gmail admin được cấp để truy cập hệ thống.</p>
 
         <form @submit.prevent="login">
-          <label>Email</label>
-          <div class="input-box">
-            <i class="bi bi-person-fill"></i>
-            <input v-model="email" type="email" placeholder="abc@gmail.com" />
-          </div>
-
-          <label>Mật khẩu</label>
-          <div class="input-box">
-            <i class="bi bi-lock-fill"></i>
-            <input
-              v-model="password"
-              :type="showPassword ? 'text' : 'password'"
-              placeholder="Nhập mật khẩu"
-            />
-            <button type="button" @click="showPassword = !showPassword">
-              <i :class="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
-            </button>
-          </div>
-
           <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
 
           <button class="login-btn" type="submit" :disabled="loading">
-            {{ loading ? 'Đang đăng nhập...' : 'Đăng nhập' }}
-            <i class="bi bi-arrow-left-right"></i>
-          </button>
-
-          <button class="forgot-btn" type="button" @click="openForgotPassword">
-            Quên mật khẩu?
+            <i class="bi bi-google"></i>
+            {{ loading ? 'Đang đăng nhập...' : 'Đăng nhập bằng Gmail' }}
           </button>
 
             <p class="login-note">
@@ -231,94 +139,6 @@ const confirmPasswordReset = async () => {
         </form>
       </div>
     </section>
-
-    <div v-if="showForgotModal" class="forgot-overlay" @click.self="closeForgotPassword">
-      <section class="forgot-modal" aria-modal="true" role="dialog">
-        <button class="modal-close" type="button" aria-label="Đóng" @click="closeForgotPassword">
-          <i class="bi bi-x-lg"></i>
-        </button>
-
-        <div class="forgot-modal-icon">
-          <i class="bi bi-envelope-check"></i>
-        </div>
-
-        <h3>Quên mật khẩu admin</h3>
-        <p v-if="forgotStep === 'email'">
-          Nhập Gmail admin để nhận mã OTP xác minh.
-        </p>
-        <p v-else>
-          Nhập OTP đã gửi đến Gmail và đặt mật khẩu mới.
-        </p>
-
-        <form v-if="forgotStep === 'email'" @submit.prevent="requestForgotOtp">
-          <label>Gmail admin</label>
-          <div class="input-box">
-            <i class="bi bi-envelope-fill"></i>
-            <input v-model="forgotEmail" type="email" placeholder="abc@gmail.com" />
-          </div>
-
-          <p v-if="forgotError" class="error-message">{{ forgotError }}</p>
-          <p v-if="forgotMessage" class="success-message">{{ forgotMessage }}</p>
-
-          <button class="login-btn" type="submit" :disabled="forgotLoading">
-            {{ forgotLoading ? 'Đang gửi OTP...' : 'Gửi OTP' }}
-            <i class="bi bi-send"></i>
-          </button>
-        </form>
-
-        <form v-else @submit.prevent="confirmPasswordReset">
-          <label>Gmail admin</label>
-          <div class="input-box">
-            <i class="bi bi-envelope-fill"></i>
-            <input v-model="forgotEmail" type="email" placeholder="abc@gmail.com" />
-          </div>
-
-          <label>Mã OTP</label>
-          <div class="input-box">
-            <i class="bi bi-shield-lock-fill"></i>
-            <input v-model="forgotOtp" inputmode="numeric" maxlength="6" placeholder="Nhập OTP" />
-          </div>
-
-          <label>Mật khẩu mới</label>
-          <div class="input-box">
-            <i class="bi bi-lock-fill"></i>
-            <input
-              v-model="newPassword"
-              :type="showNewPassword ? 'text' : 'password'"
-              placeholder="Ít nhất 6 ký tự"
-            />
-            <button type="button" @click="showNewPassword = !showNewPassword">
-              <i :class="showNewPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
-            </button>
-          </div>
-
-          <label>Xác nhận mật khẩu</label>
-          <div class="input-box">
-            <i class="bi bi-lock-fill"></i>
-            <input
-              v-model="confirmPassword"
-              :type="showConfirmPassword ? 'text' : 'password'"
-              placeholder="Nhập lại mật khẩu mới"
-            />
-            <button type="button" @click="showConfirmPassword = !showConfirmPassword">
-              <i :class="showConfirmPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
-            </button>
-          </div>
-
-          <p v-if="forgotError" class="error-message">{{ forgotError }}</p>
-          <p v-if="forgotMessage" class="success-message">{{ forgotMessage }}</p>
-
-          <button class="login-btn" type="submit" :disabled="forgotLoading">
-            {{ forgotLoading ? 'Đang đổi mật khẩu...' : 'Đổi mật khẩu' }}
-            <i class="bi bi-check2-circle"></i>
-          </button>
-
-          <button class="forgot-btn" type="button" :disabled="forgotLoading" @click="requestForgotOtp">
-            Gửi lại OTP
-          </button>
-        </form>
-      </section>
-    </div>
   </main>
 </template>
 
